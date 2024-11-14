@@ -1,37 +1,80 @@
-# Useful KG Integration Tools
+# Useful Knowledge Graph Integration Tools
 
-> This repository contains a collection of tools that implement specific (sub)tasks for data integration with the target of knowledge graph strucutres
+> This repository contains a collection of tools that implement specific tasks for data integration targeting knowledge graph structures.
 
-# Usage
+## Table of Contents
 
-We use python and docker to wrap each tool as a web service
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [API Wrapper](#api-wrapper)
+  - [Parameters](#parameters)
+- [List of Tools](#list-of-tools)
+  - [Structure Transformation](#structure-transformation)
+  - [Entity and Relation Extraction](#entity-and-relation-extraction)
+  - [Schema and Entity Resolution](#schema-and-entity-resolution)
+- [Directory Structure](#directory-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Wrapper
+## Introduction
 
-- The _api-wrapper encapsulates the usage of single tools into a web service to enable remote calling their capabilties in other projects.
+This repository contains a collection of tools designed to assist with data integration tasks aimed at constructing or manipulating knowledge graph structures. These tools cover various aspects of data integration, including structure transformation, entity and relation extraction, and schema and entity resolution.
 
+## Installation
+
+To get started with these tools, ensure you have [Python](https://www.python.org/downloads/) and [Docker](https://www.docker.com/get-started) installed on your system.
+
+Clone the repository:
+
+```bash
+git clone https://github.com/vehnem/kg-tools.git
+cd kg-tools
 ```
 
+## Usage
+
+We use Python and Docker to wrap each tool as a web service, enabling remote access to their capabilities from other projects.
+
+### API Wrapper
+
+The `_api-wrapper` encapsulates the usage of individual tools into a web service. This allows you to call the tools remotely and integrate them into your data processing pipelines.
+
+```bash
+# Example command to start the API wrapper
+python api_wrapper.py
 ```
 
-## Parameters
+### Parameters
 
-# List of Tools
+Each tool may require different types of input data to function properly, including payloads/datasets, configuration files, and parameters. Please refer to the documentation of each tool for specific usage instructions.
 
-We categorize each tool
+## List of Tools
 
-Tools with the `_` suffix are utils with their codebase currently directly located in this repository.
+We categorize each tool based on its functionality. Tools with the `_` suffix are utilities with their codebase currently located directly in this repository.
 
-## Structure Transformation
-- _data-util
-- rmlmapper
+### Structure Transformation
 
-## Entity and Relation Extraction
-- stanford-corenlp openie
+- **_data-util**: Utility functions for data manipulation and transformation.
+- **rmlmapper**: A tool for mapping data to RDF using RML mappings.
 
-## Schema and Entity Resolution
-- jedai
-- paris
+### Entity and Relation Extraction
 
-# Code of Conduct
-- tool binaries should be placed **binaries/ or **bin/ directories
+- **stanford-corenlp openie**: Open Information Extraction using Stanford CoreNLP.
+
+### Schema and Entity Resolution
+
+- **jedai**: A toolkit for entity resolution and data cleaning.
+- **paris**: An algorithm for aligning ontologies and schemas.
+
+## Directory Structure
+
+- Tool binaries should be placed in `binaries/` or `bin/` directories.
+
+## Contributing
+
+Contributions are welcome! Please read our [contribution guidelines](CONTRIBUTING.md) for more details.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
