@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "data-util"
+version = "0.1.0"
+description = ""
+authors = ["Marvin Hofer <vehnem@yahoo.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+rdflib = "^7.1.1"
+pandas = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
