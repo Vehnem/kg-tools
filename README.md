@@ -36,6 +36,17 @@ cd kg-tools
 
 We use Python and Docker to wrap each tool as a web service, enabling remote access to their capabilities from other projects.
 
+```bash
+# Example command to start the Blacksheep Application with Uvicorn, with automatic reload on file change
+uvicorn server:app --port 8000 --reload
+```
+
+
+```bash
+# Example request to run Stanford-OpenIE
+curl "http://127.0.0.1:8000/run-openie?input=Barack%20Obama%20was%20born%20in%20Hawaii."
+```
+
 ### API Wrapper
 
 The `_api-wrapper` encapsulates the usage of individual tools into a web service. This allows you to call the tools remotely and integrate them into your data processing pipelines.
