@@ -1,12 +1,5 @@
+Example Get Request:
 
 ```bash
-docker run -p 9000:9000 nlpbox/corenlp
-```
-
-OR
-
-
-```bash
-docker build -t openie-test .
-echo "Paula is a girl." | docker run --rm -i openie-test
+curl "http://localhost:port/run?input=Paula%20is%20a%20girl%20&flags=-format%20ollie'
 ```

@@ -19,14 +19,19 @@ rm -r /root/.cache
 
 WORKDIR /app
 
-COPY paris/requirements.txt .
+RUN wget https://github.com/AgreementMakerLight/AML-Project/releases/download/v3.2/AML_v3.2.zip
+RUN unzip AML_v3.2.zip && rm AML_v3.2.zip
 
-COPY paris/config.json .
+WORKDIR /app/AML_v3.2
 
-COPY _tool-wrapper/app.py .
+COPY agreementmaker/requirements.txt /app/AML_v3.2
+
+COPY agreementmaker/config.json /app/AML_v3.2
+
+COPY agreementmaker/example /app/AML_v3.2
+
+COPY _tool-wrapper/app.py /app/AML_v3.2
 
 RUN pip3 install -r requirements.txt
-
-RUN wget https://github.com/dig-team/PARIS/releases/download/v0.3/paris_0_3.jar
 
 CMD [ "python", "-m" , "flask", "run", "--host=0.0.0.0"]

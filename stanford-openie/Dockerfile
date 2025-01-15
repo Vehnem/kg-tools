@@ -1,19 +1,40 @@
-FROM eclipse-temurin
+FROM alpine:3.7
 
-RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+### Get Java via the package manager
+RUN apk update \
+&& apk upgrade \
+&& apk add --no-cache bash \
+&& apk add --no-cache --virtual=build-dependencies unzip \
+&& apk add --no-cache curl \
+&& apk add --no-cache openjdk8-jre
 
+### Get Python, PIP
+RUN apk add --no-cache python3 \
+&& python3 -m ensurepip \
+&& pip3 install --upgrade pip setuptools \
+&& rm -r /usr/lib/python*/ensurepip && \
+if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
+if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
+rm -r /root/.cache
+
+
+# Download und entpacken des Stanford CoreNLP
 WORKDIR /opt
 
 RUN wget https://nlp.stanford.edu/software/stanford-corenlp-4.5.8.zip
-
 RUN unzip stanford-corenlp-4.5.8.zip && rm stanford-corenlp-4.5.8.zip
 
 WORKDIR /opt/stanford-corenlp-4.5.8
 
-ENTRYPOINT ["java", "-mx1g", "-cp", "*", "edu.stanford.nlp.naturalli.OpenIE"]
+# Kopiere die Flask-App
+COPY stanford-openie/requirements.txt /opt/stanford-corenlp-4.5.8/
 
-CMD []
+COPY stanford-openie/config.json /opt/stanford-corenlp-4.5.8/
 
+COPY _tool-wrapper/app.py /opt/stanford-corenlp-4.5.8/
+
+RUN pip3 install -r requirements.txt
+
+# Flask starten
+
+CMD [ "python", "-m" , "flask", "run", "--host=0.0.0.0"]

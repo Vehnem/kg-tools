@@ -1,0 +1,4 @@
+ {
+  "command": ["java", "-jar", "AgreementMakerLight.jar"]
+}
+
