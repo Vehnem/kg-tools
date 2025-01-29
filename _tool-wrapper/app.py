@@ -46,6 +46,9 @@ def run_post():
     # Überprüfen, ob Dateien im Request enthalten sind
     files = request.files.getlist('file')
     flags = request.form.getlist('flag')  # Allgemeine Flags (z.B. -p, -d)
+
+    input = request.form.get('input')
+
     file_flags = request.form.getlist('file_flag')  # Datei-Flags (z.B. -f1, -f2)
 
     # Überprüfen, ob die Anzahl der Datei-Flags und Dateien übereinstimmt
@@ -87,7 +90,9 @@ def run_post():
                 command.extend([file_flag, file_path])
 
         # Führe den Befehl aus
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(command, input=input.encode('utf-8'),
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
 
         # Wenn die Datei(en) am Ende nicht mehr gebraucht werden, lösche sie
         for file in files:
