@@ -19,7 +19,33 @@
       box-sizing: border-box;
       overflow: auto;
       border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
+
+    #add-node-button {
+      margin-top: auto;
+      align-self: flex-end;
+      padding: 0.5rem 1rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    #add-node-button:hover {
+      background-color: #45a049;
+    }
+
+    button {
+      margin: 1rem 0;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+
     textarea {
       width: 100%;
       height: 80%;
@@ -31,6 +57,15 @@
       box-sizing: border-box;
       position: relative;
       background-color: #333;
+    }
+    #graph-container.highlight {
+      border: 3px solid #4CAF50; /* grüner Rand als Beispiel */
+      background-color: #444; /* etwas heller, um den Container hervorzuheben */
+    }
+
+    /* Maus-Cursor im "Add Node"-Modus */
+    body.adding-node #graph-container {
+      cursor: pointer; /* Crosshair-Cursor für präzises Klicken */
     }
     /* Node styling */
     .node circle {
@@ -111,6 +146,7 @@ ex:Place1 a ex:Place ;
     </textarea>
     <br />
     <button id="update-button">Re-Parse RDF</button>
+    <button id="add-node-button"></button>
   </div>
 
   <div id="graph-container">
@@ -127,6 +163,7 @@ ex:Place1 a ex:Place ;
      **************************************************/
     const rdfInputElem = document.getElementById('rdf-input');
     const updateButton = document.getElementById('update-button');
+    const addNodeButton = document.getElementById('add-node-button');
     const graphContainer = document.getElementById('graph-container');
     const width = graphContainer.clientWidth;
     const height = graphContainer.clientHeight;
@@ -147,7 +184,6 @@ ex:Charlie a ex:Person ;
 ex:Place1 a ex:Place ;
           rdfs:label "Wonderland" ;
           ex:locatedIn "Somewhere far away" .`;
-
 
           // Load RDF from local storage or use the default
 function loadGraphFromStorage() {
@@ -172,6 +208,43 @@ resetButton.textContent = 'Reset Graph';
 resetButton.addEventListener('click', resetGraph);
 document.getElementById('editor-container').appendChild(resetButton);
 
+let isAddingNode = false;
+
+//Add Node Button
+addNodeButton.textContent = 'Add New Node';
+document.getElementById('editor-container').appendChild(addNodeButton);
+addNodeButton.addEventListener('click', () => {
+    isAddingNode = true;
+    document.body.classList.add('adding-node'); // Cursor ändern
+    graphContainer.classList.add('highlight');  // Graph Container hervorheben
+});
+document.getElementById('graph-container').addEventListener('click', (event, d) => {
+    if (!isAddingNode) return;
+
+    event.stopPropagation()
+
+    document.body.classList.remove('adding-node');
+    graphContainer.classList.remove('highlight');
+
+    const rect = document.getElementById('graph-container').getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    addNewNode(x, y);
+
+    isAddingNode = false;
+});
+
+// Füge das Kontextmenü zum Dokument hinzu
+const contextMenu = document.createElement('div');
+contextMenu.style.position = 'absolute';
+contextMenu.style.backgroundColor = 'white';
+contextMenu.style.border = '1px solid #ccc';
+contextMenu.style.padding = '5px';
+contextMenu.style.display = 'none';
+contextMenu.style.zIndex = 1000;
+document.body.appendChild(contextMenu);
+
     // RDF constants
     const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
     const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
@@ -194,17 +267,6 @@ document.getElementById('editor-container').appendChild(resetButton);
       .attr('height', height);
 
     // A big transparent background to catch clicks for "new node"
-    svg.append('rect')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('fill', 'transparent')
-      .on('click', (event) => {
-        // Only add node if the user actually clicked the background
-        if (event.target === event.currentTarget) {
-          const [mx, my] = d3.pointer(event, svg.node());
-          addNewNode(mx, my);
-        }
-      });
 
       svg.append('defs')
         .append('marker')
@@ -356,6 +418,10 @@ document.getElementById('editor-container').appendChild(resetButton);
         // double-click => edit label
         .on('dblclick', (event, d) => {
           handleNodeEdit(d);
+        })
+        .on('contextmenu', (event, d) => {
+            event.preventDefault();  // Verhindert das Standard-Browser-Kontextmenü
+            showContextMenu(event, d);  // Zeige das benutzerdefinierte Kontextmenü
         });
 
       // Node shapes & colors
@@ -430,16 +496,22 @@ document.getElementById('editor-container').appendChild(resetButton);
     // 6a) Add new node at position (x, y)
     function addNewNode(x, y) {
       const newId = 'http://example.org/newNode-' + Date.now();
-      currentNodes.push({
+      const newNode = {
         id: newId,
         literal: false,
         classUri: null,
-        label: 'New Node',
-        // set initial coords so it appears where we clicked
+        label: '',
         x, y,
         fx: x, fy: y
-      });
-      renderGraph();
+      };
+
+      const newLabel = prompt('Enter label for the new node:', 'New Node');
+      if (newLabel !== null && newLabel !== '') {
+        newNode.label = newLabel;
+        currentNodes.push(newNode);
+        renderGraph();
+      }
+
     }
 
     // 6b) Double-click => prompt for new label
@@ -449,6 +521,85 @@ document.getElementById('editor-container').appendChild(resetButton);
         d.label = newLabel;
         renderGraph();
       }
+    }
+
+    let clickedNode = null;
+
+    function showContextMenu(event, node) {
+
+        document.getElementById('graph-container').addEventListener('click', closeContextMenuOnClick);
+        clickedNode = node;
+
+      // Erstelle das Kontextmenü dynamisch, wenn es noch nicht vorhanden ist
+      let contextMenu = document.getElementById('context-menu');
+      if (!contextMenu) {
+        contextMenu = document.createElement('div');
+        contextMenu.id = 'context-menu';
+        contextMenu.style.position = 'absolute';
+        contextMenu.style.backgroundColor = 'white';
+        contextMenu.style.border = '1px solid #ccc';
+        contextMenu.style.padding = '5px';
+        contextMenu.style.display = 'none';
+        contextMenu.style.zIndex = 1000;
+        document.body.appendChild(contextMenu);
+
+        // Option "Edit"
+        const editOption = document.createElement('div');
+        editOption.textContent = 'Edit';
+        editOption.addEventListener('click', () => {
+            handleNodeEdit(clickedNode);
+            hideContextMenu();
+        });
+        contextMenu.appendChild(editOption);
+
+        // Option "Remove"
+        const removeOption = document.createElement('div');
+        removeOption.textContent = 'Remove';
+        removeOption.addEventListener('click', () => {
+            handleNodeRemove(clickedNode);
+            hideContextMenu();
+        });
+        contextMenu.appendChild(removeOption);
+      }
+
+      // Positioniere das Kontextmenü
+      contextMenu.style.left = `${event.clientX}px`;
+      contextMenu.style.top = `${event.clientY}px`;
+      contextMenu.style.display = 'block';
+
+      // Verhindere, dass das Standard-Kontextmenü erscheint
+      event.preventDefault();
+    }
+
+    // Verstecke das Kontextmenü
+    function hideContextMenu() {
+        const contextMenu = document.getElementById('context-menu');
+        if (contextMenu) {
+            contextMenu.style.display = 'none';
+        }
+        clickedNode = null;
+    }
+    function closeContextMenuOnClick(event) {
+        const contextMenu = document.getElementById('context-menu');
+        // Überprüfe, ob der Klick außerhalb des Kontextmenüs erfolgt ist
+        if (contextMenu && !contextMenu.contains(event.target)) {
+            hideContextMenu();
+            // Entferne den Event-Listener, um zu verhindern, dass das Menü bei jedem Klick wieder geschlossen wird
+            document.getElementById('graph-container').removeEventListener('click', closeContextMenuOnClick);
+    }
+}
+
+    // Funktion zum Entfernen eines Knotens
+    function handleNodeRemove(node) {
+        const confirmRemove = confirm('Are you sure you want to remove this node?');
+        if (confirmRemove) {
+        // Entferne den Knoten aus der Liste
+            currentNodes = currentNodes.filter(n => n !== node);
+
+    // Neu rendern des Graphen nach dem Entfernen
+    renderGraph();
+    syncEditorWithGraph()
+        }
     }
 
     /**************************************************
