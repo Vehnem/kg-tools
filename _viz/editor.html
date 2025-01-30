@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>RDF Graph Editor (Add/Edit Nodes + Sync Textarea)</title>
+  <style>
+    /* Basic styling */
+    body {
+      display: flex;
+      flex-direction: row;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #editor-container {
+      width: 40%;
+      height: 100vh;
+      padding: 1rem;
+      box-sizing: border-box;
+      overflow: auto;
+      border-right: 1px solid #ccc;
+    }
+    textarea {
+      width: 100%;
+      height: 80%;
+      box-sizing: border-box;
+    }
+    #graph-container {
+      width: 60%;
+      height: 100vh;
+      box-sizing: border-box;
+      position: relative;
+      background-color: #333;
+    }
+    /* Node styling */
+    .node circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+      cursor: pointer;
+    }
+    .node rect {
+      stroke: #fff;
+      stroke-width: 1.5px;
+      cursor: pointer;
+    }
+    .node text {
+      pointer-events: none;
+      text-anchor: middle;
+      font-size: 12px;
+      fill: #fff;
+    }
+    /* Link styling */
+    .link line {
+      stroke: #999;
+      stroke-opacity: 0.6;
+      stroke-width: 1.5px;
+    }
+    .link-label {
+      fill: #fff;
+      font-size: 12px;
+      pointer-events: none; /* so you can click the line/node behind the text */
+    }
+    button {
+      margin: 1rem 0;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .autocomplete-dropdown {
+    position: absolute;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    display: none;
+  }
+
+  .autocomplete-item {
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .autocomplete-item:hover,
+  .autocomplete-item.selected {
+    background-color: #f0f0f0;
+  }
+  </style>
+</head>
+<body>
+
+  <div id="editor-container">
+    <h2>RDF Editor</h2>
+    <textarea id="rdf-input">
+@prefix ex: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Alice a ex:Person ;
+        ex:knows ex:Bob, ex:Charlie ;
+        rdfs:label "Alice" .
+
+ex:Bob a ex:Person ;
+       rdfs:label "Bob" .
+
+ex:Charlie a ex:Person ;
+           rdfs:label "Charlie" .
+
+ex:Place1 a ex:Place ;
+          rdfs:label "Wonderland" ;
+          ex:locatedIn "Somewhere far away" .
+    </textarea>
+    <br />
+    <button id="update-button">Re-Parse RDF</button>
+  </div>
+
+  <div id="graph-container">
+    <!-- D3 Visualization -->
+  </div>
+
+  <!-- D3.js -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- rdflib.js -->
+  <script src="https://unpkg.com/rdflib@2.2.2/dist/rdflib.min.js"></script>
+  <script>
+    /**************************************************
+     * 1. Constants & DOM elements
+     **************************************************/
+    const rdfInputElem = document.getElementById('rdf-input');
+    const updateButton = document.getElementById('update-button');
+    const graphContainer = document.getElementById('graph-container');
+    const width = graphContainer.clientWidth;
+    const height = graphContainer.clientHeight;
+
+    const defaultRDF = `@prefix ex: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Alice a ex:Person ;
+        ex:knows ex:Bob, ex:Charlie ;
+        rdfs:label "Alice" .
+
+ex:Bob a ex:Person ;
+       rdfs:label "Bob" .
+
+ex:Charlie a ex:Person ;
+           rdfs:label "Charlie" .
+
+ex:Place1 a ex:Place ;
+          rdfs:label "Wonderland" ;
+          ex:locatedIn "Somewhere far away" .`;
+
+
+          // Load RDF from local storage or use the default
+function loadGraphFromStorage() {
+  const savedRDF = localStorage.getItem('rdfGraph');
+  rdfInputElem.value = savedRDF || defaultRDF;
+  parseAndSetGraph(rdfInputElem.value);
+  renderGraph();
+}
+
+// Save RDF to local storage
+function saveGraphToStorage() {
+  const rdfString = rdfInputElem.value;
+  localStorage.setItem('rdfGraph', rdfString);
+}
+
+// Load the graph on page load
+window.addEventListener('load', loadGraphFromStorage);
+
+// Reset button
+const resetButton = document.createElement('button');
+resetButton.textContent = 'Reset Graph';
+resetButton.addEventListener('click', resetGraph);
+document.getElementById('editor-container').appendChild(resetButton);
+
+    // RDF constants
+    const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+    const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
+
+    // Color scale for classes
+    const classColor = d3.scaleOrdinal(d3.schemeCategory10);
+
+    /**************************************************
+     * 2. Global graph data (for dynamic updates)
+     **************************************************/
+    let currentNodes = [];
+    let currentLinks = [];
+
+    /**************************************************
+     * 3. Setup D3 <svg>, background rect, forces
+     **************************************************/
+    const svg = d3.select('#graph-container')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
+
+    // A big transparent background to catch clicks for "new node"
+    svg.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', 'transparent')
+      .on('click', (event) => {
+        // Only add node if the user actually clicked the background
+        if (event.target === event.currentTarget) {
+          const [mx, my] = d3.pointer(event, svg.node());
+          addNewNode(mx, my);
+        }
+      });
+
+      svg.append('defs')
+        .append('marker')
+        .attr('id', 'arrowhead')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 26) // Position of the arrowhead on the line
+        .attr('refY', 0)
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5') // Triangle shape
+        .attr('fill', '#999');        // Arrowhead color
+
+    // D3 groups
+    const linkGroup = svg.append('g').attr('class', 'link');
+    const linkLabelGroup = svg.append('g').attr('class', 'link-label-group');
+    const nodeGroup = svg.append('g').attr('class', 'node');
+
+    // Force simulation
+    const simulation = d3.forceSimulation()
+      .force('link', d3.forceLink().id(d => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-400))
+      .force('center', d3.forceCenter(width / 2, height / 2));
+
+    /**************************************************
+     * 4. Parse RDF => set currentNodes/currentLinks
+     **************************************************/
+    function parseRDFToGraph(rdfString) {
+      const store = $rdf.graph();
+      const contentType = 'text/turtle';
+      const baseURI = 'http://example.org/base#';
+
+      try {
+        $rdf.parse(rdfString, store, baseURI, contentType);
+      } catch (err) {
+        console.error('Failed to parse RDF:', err);
+        alert('Error parsing RDF. Check console for details.');
+        return { nodes: [], links: [] };
+      }
+
+      const nodesMap = new Map();
+      const linksArray = [];
+      const classesMap = new Map(); // subject -> classURI
+      const labelsMap = new Map();  // subject -> label
+
+      store.statements.forEach(stmt => {
+        const subj = stmt.subject.value;
+        const pred = stmt.predicate.value;
+        const obj  = stmt.object.value;
+
+        // Ensure subject in nodesMap
+        if (!nodesMap.has(subj)) {
+          nodesMap.set(subj, { id: subj, literal: false });
+        }
+
+        // Check predicate
+        if (pred === RDF_TYPE) {
+          // subject's class
+          classesMap.set(subj, obj);
+        } else if (pred === RDFS_LABEL && stmt.object.termType === 'Literal') {
+          // subject's label
+          labelsMap.set(subj, obj);
+        } else {
+          // Normal triple => create a link
+          if (stmt.object.termType === 'NamedNode') {
+            // Ensure object in nodesMap
+            if (!nodesMap.has(obj)) {
+              nodesMap.set(obj, { id: obj, literal: false });
+            }
+            linksArray.push({
+              source: subj,
+              target: obj,
+              predicate: pred
+            });
+          } else {
+            // It's a literal => create a "literal node"
+            const literalId = subj + '::' + pred + '::' + obj; // fake ID
+            nodesMap.set(literalId, {
+              id: literalId,
+              literal: true,
+              value: obj
+            });
+            linksArray.push({
+              source: subj,
+              target: literalId,
+              predicate: pred
+            });
+          }
+        }
+      });
+
+      // Convert to arrays, attach classUri & label
+      const nodesArray = [];
+      nodesMap.forEach((node, key) => {
+        node.classUri = classesMap.get(key) || null;
+        node.label = labelsMap.get(key) || null;
+        nodesArray.push(node);
+      });
+
+      return { nodes: nodesArray, links: linksArray };
+    }
+
+    function parseAndSetGraph(rdfString) {
+
+      const { nodes, links } = parseRDFToGraph(rdfString);
+      currentNodes = nodes;
+      currentLinks = links;
+    }
+
+    /**************************************************
+     * 5. Render / re-render the graph
+     **************************************************/
+    function renderGraph() {
+      // Clear old
+      linkGroup.selectAll('line').remove();
+      linkLabelGroup.selectAll('text').remove();
+      nodeGroup.selectAll('g').remove();
+
+      // --- Links ---
+      const linkSelection = linkGroup
+        .selectAll('line')
+        .data(currentLinks)
+        .enter()
+        .append('line')
+        .attr('stroke-width', 2)
+        .attr('marker-end', 'url(#arrowhead)'); // Attach the arrowhead marker
+
+      // Link labels
+      const linkLabelSelection = linkLabelGroup
+        .selectAll('text')
+        .data(currentLinks)
+        .enter()
+        .append('text')
+        .attr('class', 'link-label')
+        .text(d => shortenUri(d.predicate));
+
+      // --- Nodes ---
+      const nodeSelection = nodeGroup
+        .selectAll('g')
+        .data(currentNodes)
+        .enter()
+        .append('g')
+        .call(d3.drag()
+          .on('start', dragstarted)
+          .on('drag', dragged)
+          .on('end', dragended)
+        )
+        // double-click => edit label
+        .on('dblclick', (event, d) => {
+          handleNodeEdit(d);
+        });
+
+      // Node shapes & colors
+      nodeSelection.each(function(d) {
+        if (d.literal) {
+          // Rect for literal
+          d3.select(this)
+            .append('rect')
+            .attr('x', -10)
+            .attr('y', -10)
+            .attr('width', 20)
+            .attr('height', 20)
+            .attr('fill', d.classUri ? classColor(d.classUri) : '#ff7f0e');
+        } else {
+          // Circle for resource
+          d3.select(this)
+            .append('circle')
+            .attr('r', 12)
+            .attr('fill', d.classUri ? classColor(d.classUri) : '#999');
+        }
+      });
+
+      // Node labels
+      nodeSelection
+        .append('text')
+        .attr('dy', -16)
+        .text(d => d.label ? d.label : (d.literal ? d.value : shortenUri(d.id)));
+
+      // --- Force simulation ---
+      simulation
+        .nodes(currentNodes)
+        .on('tick', ticked);
+
+      simulation.force('link')
+        .links(currentLinks);
+
+      simulation.alpha(1).restart();
+
+      function ticked() {
+        linkSelection
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+
+        linkLabelSelection
+          .attr('x', d => (d.source.x + d.target.x) / 2)
+          .attr('y', d => (d.source.y + d.target.y) / 2);
+
+        nodeSelection
+          .attr('transform', d => `translate(${d.x}, ${d.y})`);
+      }
+
+      // After rendering, sync the RDF text with our updated graph
+      syncEditorWithGraph();
+      getSuggestions();
+    }
+
+
+    // Reset graph to default RDF
+    function resetGraph() {
+        localStorage.removeItem('rdfGraph');
+        rdfInputElem.value = defaultRDF;
+        parseAndSetGraph(defaultRDF);
+        renderGraph();
+    }
+
+
+    /**************************************************
+     * 6. Adding nodes, editing labels, etc.
+     **************************************************/
+    // 6a) Add new node at position (x, y)
+    function addNewNode(x, y) {
+      const newId = 'http://example.org/newNode-' + Date.now();
+      currentNodes.push({
+        id: newId,
+        literal: false,
+        classUri: null,
+        label: 'New Node',
+        // set initial coords so it appears where we clicked
+        x, y,
+        fx: x, fy: y
+      });
+      renderGraph();
+    }
+
+    // 6b) Double-click => prompt for new label
+    function handleNodeEdit(d) {
+      const newLabel = prompt('Enter new label:', d.label || '');
+      if (newLabel !== null) {
+        d.label = newLabel;
+        renderGraph();
+      }
+    }
+
+    /**************************************************
+     * 7. Serialize graph -> Turtle -> put in <textarea>
+     **************************************************/
+    function syncEditorWithGraph() {
+      // Build an rdflib store from currentNodes/currentLinks
+      const store = $rdf.graph();
+
+      // 7a) For each node that isn't a "literal" node, add:
+      //       subject rdf:type classUri   (if classUri)
+      //       subject rdfs:label "..."    (if label)
+      currentNodes.forEach(node => {
+        if (!node.literal) {
+          const subj = $rdf.sym(node.id);
+          if (node.classUri) {
+            store.add(
+              subj,
+              $rdf.sym(RDF_TYPE),
+              $rdf.sym(node.classUri)
+            );
+          }
+          if (node.label) {
+            store.add(
+              subj,
+              $rdf.sym(RDFS_LABEL),
+              $rdf.literal(node.label)
+            );
+          }
+        }
+      });
+
+      // 7b) For each link, add the triple
+      //   if the target is a literal node => parse "subj::pred::obj"
+      //   otherwise => subject => object is a named node
+      currentLinks.forEach(link => {
+        const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+        const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+
+        // If target is a "literal node ID" => parse it
+        const isLiteralNode = currentNodes.find(n => n.id === targetId && n.literal);
+
+        if (!isLiteralNode) {
+          // Normal triple
+          store.add(
+            $rdf.sym(sourceId),
+            $rdf.sym(link.predicate),
+            $rdf.sym(targetId)
+          );
+        } else {
+          // Parse the "subj::pred::obj" pattern
+          // e.g. "http://example.org/Alice::http://example.org/name::AliceName"
+          // We assume this is how we originally created the literal node ID
+          const [subjFull, predFull, literalVal] = targetId.split('::');
+          // But the real subject is sourceId, the real predicate is link.predicate
+          // Actually, we want to re-inject the literal as the triple object
+          // The "subjFull" might differ from sourceId if user rearranged things,
+          // but let's stay consistent with the link's actual subject/predicate
+          // We'll store (sourceId, link.predicate, literalVal)
+          store.add(
+            $rdf.sym(sourceId),
+            $rdf.sym(link.predicate),
+            $rdf.literal(isLiteralNode.value)
+          );
+        }
+      });
+
+      // 7c) Serialize to Turtle
+      const turtle = new $rdf.Serializer(store).toN3(store);
+
+      // 7d) Put into the <textarea>
+      rdfInputElem.value = turtle;
+    }
+
+    /**************************************************
+     * 8. Shorten URIs
+     **************************************************/
+    function shortenUri(uri) {
+      const parts = uri.split(/[\/#]/);
+      return parts[parts.length - 1] || uri;
+    }
+
+    /**************************************************
+     * 9. D3 Drag Behavior
+     **************************************************/
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    /**************************************************
+     * 10. UI: parse & render on "Re-Parse" button
+     **************************************************/
+    updateButton.addEventListener('click', () => {
+      parseAndSetGraph(rdfInputElem.value);
+      renderGraph();
+      saveGraphToStorage(); // alert("saved")
+    });
+
+    /**************************************************
+     * 11. Initial load
+     **************************************************/
+    parseAndSetGraph(rdfInputElem.value);
+    renderGraph();
+
+
+    /**************************************************
+     * 12. Suggestions
+     **************************************************/
+    function getSuggestions() {
+        // Collect all node IDs, labels, and literal values
+        const suggestions = currentNodes.map(node => {
+
+            if(node.literal) {
+                return node.value
+            } else {
+                return "<"+node.id+">"
+                // const idParts = node.id.split(/[#/]/);
+                // return ":"+idParts[idParts.length - 1];
+            }
+
+        });
+        return suggestions;
+    }
+
+    const autocompleteDropdown = document.createElement('div');
+autocompleteDropdown.classList.add('autocomplete-dropdown');
+document.body.appendChild(autocompleteDropdown);
+
+// Listen for input events on the textarea
+rdfInputElem.addEventListener('input', (event) => {
+  const query = getCurrentWord(rdfInputElem);
+  if (query.length > 1) {
+    showSuggestions(query);
+  } else {
+    hideSuggestions();
+  }
+});
+
+// Hide the dropdown on blur
+rdfInputElem.addEventListener('blur', hideSuggestions);
+
+rdfInputElem.addEventListener('keydown', (event) => {
+    // if (autocompleteDropdown.style.display === 'block' && event.key === 'Enter') {
+    //     event.preventDefault(); // Prevent new line
+    //     const selectedItem = autocompleteDropdown.querySelector('.autocomplete-item.selected');
+    //     if (selectedItem) {
+    //         insertSuggestion(selectedItem.textContent);
+    //     }
+    // } 
+     if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || ( event.key === 'Enter' && event.shiftKey) || event.key === 'Escape') {
+    handleAutocompleteNavigation(event);
+  }
+});
+
+// function getSuggestions() {
+//   // Collect node IDs, labels, and literal values for suggestions
+//   return currentNodes.map(node => node.literal ? node.value : node.id);// (node.label || node.id));
+// }
+
+function getCurrentWord(textarea) {
+  const text = textarea.value;
+  const cursorPos = textarea.selectionStart;
+  const textBeforeCursor = text.substring(0, cursorPos);
+  const words = textBeforeCursor.split(/[\s<>"]+/);
+  return words.pop();
+}
+
+function showSuggestions(query) {
+  console.log(query);
+  const suggestions = getSuggestions().filter(suggestion => suggestion.toLowerCase().includes(query.toLowerCase()));
+  if (suggestions.length === 0) {
+    hideSuggestions();
+    return;
+  }
+
+  // Clear previous suggestions
+  autocompleteDropdown.innerHTML = '';
+  autocompleteDropdown.style.display = 'block';
+
+  // Position the dropdown at the cursor
+  const { left, top } = getCursorCoordinates(rdfInputElem);
+  autocompleteDropdown.style.left = `${left}px`;
+  autocompleteDropdown.style.top = `${top}px`;
+  autocompleteDropdown.style.width = `${rdfInputElem.offsetWidth}px`;
+
+  // Populate suggestions
+  suggestions.forEach(suggestion => {
+    const item = document.createElement('div');
+    item.classList.add('autocomplete-item');
+    item.textContent = suggestion;
+    item.addEventListener('mousedown', () => insertSuggestion(suggestion));
+    autocompleteDropdown.appendChild(item);
+  });
+}
+
+function hideSuggestions() {
+  autocompleteDropdown.style.display = 'none';
+  autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach(item => item.remove());
+
+}
+
+function insertSuggestion(suggestion) {
+  const text = rdfInputElem.value;
+  const cursorPos = rdfInputElem.selectionStart;
+  const query = getCurrentWord(rdfInputElem);
+
+  // Replace the query with the selected suggestion
+  rdfInputElem.value = text.substring(0, cursorPos - query.length) + suggestion +" "+ text.substring(cursorPos);
+  // no newline after suggestion
+  
+  rdfInputElem.focus(); 
+  
+  hideSuggestions();
+}
+
+function handleAutocompleteNavigation(event) {
+  const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+  if (items.length === 0) return;
+  console.log(items)
+
+  let index = Array.from(items).findIndex(item => item.classList.contains('selected'));
+  if (event.key === 'ArrowDown') {
+    index = (index + 1) % items.length;
+  } else if (event.key === 'ArrowUp') {
+    index = (index - 1 + items.length) % items.length;
+  } else if (event.key === 'Enter') {
+    if (index >= 0) {
+      insertSuggestion(items[index].textContent);
+      // reset suggestions
+    }
+    return;
+  } else if (event.key === 'Escape') {
+    hideSuggestions();
+    return;
+  }
+
+  items.forEach(item => item.classList.remove('selected'));
+  if (index >= 0) {
+    items[index].classList.add('selected');
+  }
+}
+
+function getCursorCoordinates(textarea) {
+  const text = textarea.value.substring(0, textarea.selectionStart);
+  const div = document.createElement('div');
+  div.style.position = 'absolute';
+  div.style.whiteSpace = 'pre-wrap';
+  div.style.visibility = 'hidden';
+  div.style.font = getComputedStyle(textarea).font;
+  div.textContent = text.replace(/\n$/, '\n\u200b'); // Ensure newline spacing
+
+  const span = document.createElement('span');
+  span.textContent = '\u200b'; // Zero-width space to represent the cursor
+  div.appendChild(span);
+
+  document.body.appendChild(div);
+  const { offsetLeft, offsetTop } = textarea;
+  const { left, top } = span.getBoundingClientRect();
+  document.body.removeChild(div);
+
+  return {
+    left: left + window.scrollX - offsetLeft,
+    top: top + window.scrollY - offsetTop + textarea.scrollTop
+  };
+}
+
+  </script>
+</body>
+</html>
