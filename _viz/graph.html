@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Graph</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background-color: #333;
+    }
+    #graph-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background-color: #333;
+    }
+    /* Styling für Knoten und Kanten */
+    .node circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+      cursor: pointer;
+    }
+    .node rect {
+      stroke: #fff;
+      stroke-width: 1.5px;
+      cursor: pointer;
+    }
+    .node text {
+      pointer-events: none;
+      text-anchor: middle;
+      font-size: 12px;
+      fill: #fff;
+    }
+    .link line {
+      stroke: #999;
+      stroke-opacity: 0.6;
+      stroke-width: 1.5px;
+    }
+    .link-label {
+      fill: #fff;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    #graph-container.highlight {
+      border: 3px solid #4CAF50;
+      background-color: #444;
+    }
+    /* Contextmenü */
+    #context-menu {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 5px;
+      display: none;
+      z-index: 1000;
+      user-select: none;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <div id="graph-container"></div>
+
+  <!-- Einbindung der benötigten Bibliotheken -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/rdflib@2.2.2/dist/rdflib.min.js"></script>
+
+  <script>
+    // Globale Variablen für den Graphen
+    let currentNodes = [];
+    let currentLinks = [];
+    let isPhysicsEnabled = true;
+    let viewMode = false;
+
+    const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+    const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
+
+    // Farbskala für Klassen
+    const classColor = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const graphContainer = document.getElementById('graph-container');
+    const width = graphContainer.clientWidth;
+    const height = graphContainer.clientHeight;
+
+    // SVG-Element erstellen
+    const svg = d3.select('#graph-container')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .append('g');
+
+    // Pfeilkopf für Kanten definieren
+    svg.append('defs')
+      .append('marker')
+      .attr('id', 'arrowhead')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 26)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#999');
+
+    // Gruppen für Kanten und Knoten
+    const linkGroup = svg.append('g').attr('class', 'link');
+    const linkLabelGroup = svg.append('g').attr('class', 'link-label-group');
+    const nodeGroup = svg.append('g').attr('class', 'node');
+
+    // Force-Simulation initialisieren
+    const simulation = d3.forceSimulation()
+      .force('link', d3.forceLink().id(d => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-75))
+      .force('center', d3.forceCenter(width / 2, height / 2));
+
+    // Zoom-Verhalten
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        svg.attr("transform", event.transform);
+      });
+    d3.select("#graph-container svg").call(zoom);
+
+    // Contextmenü erstellen
+    let contextMenu = document.createElement('div');
+    contextMenu.id = 'context-menu';
+    document.body.appendChild(contextMenu);
+
+    const editOption = document.createElement('div');
+    editOption.textContent = 'Edit';
+    editOption.addEventListener('mouseover', () => {
+      editOption.style.backgroundColor = '#e0e0e0';
+    });
+    editOption.addEventListener('mouseout', () => {
+      editOption.style.backgroundColor = '';
+    });
+    contextMenu.appendChild(editOption);
+
+    const removeOption = document.createElement('div');
+    removeOption.textContent = 'Remove';
+    removeOption.addEventListener('mouseover', () => {
+      removeOption.style.backgroundColor = '#e0e0e0';
+    });
+    removeOption.addEventListener('mouseout', () => {
+      removeOption.style.backgroundColor = '';
+    });
+    contextMenu.appendChild(removeOption);
+
+    let clickedElement = null;
+    function showContextMenu(event, element, type) {
+      event.preventDefault();
+      clickedElement = element;
+      editOption.onclick = () => {
+        if (type === 'node') {
+          handleNodeEdit(clickedElement);
+        } else if (type === 'link') {
+          handleLinkEdit(clickedElement);
+        }
+        hideContextMenu();
+      };
+      removeOption.onclick = () => {
+        if (type === 'node') {
+          handleNodeRemove(clickedElement);
+        } else if (type === 'link') {
+          handleLinkRemove(clickedElement);
+        }
+        hideContextMenu();
+      };
+
+      contextMenu.style.left = `${event.clientX}px`;
+      contextMenu.style.top = `${event.clientY}px`;
+      contextMenu.style.display = 'block';
+      document.addEventListener('click', closeContextMenuOnClick);
+    }
+    function hideContextMenu() {
+      contextMenu.style.display = 'none';
+      clickedElement = null;
+      document.removeEventListener('click', closeContextMenuOnClick);
+    }
+    function closeContextMenuOnClick(event) {
+      if (!contextMenu.contains(event.target)) {
+        hideContextMenu();
+      }
+    }
+
+    // RDF-Text in Graphdaten umwandeln
+    function parseRDFToGraph(rdfString) {
+      const store = $rdf.graph();
+      const contentType = 'text/turtle';
+      const baseURI = 'http://example.org/base#';
+
+      try {
+        $rdf.parse(rdfString, store, baseURI, contentType);
+      } catch (err) {
+        console.error('Failed to parse RDF:', err);
+        alert('Error parsing RDF. Check console for details.');
+        return { nodes: [], links: [] };
+      }
+
+      const nodesMap = new Map();
+      const linksArray = [];
+      const classesMap = new Map();
+      const labelsMap = new Map();
+
+      store.statements.forEach(stmt => {
+        const subj = stmt.subject.value;
+        const pred = stmt.predicate.value;
+        const obj  = stmt.object.value;
+
+        if (!nodesMap.has(subj)) {
+          nodesMap.set(subj, { id: subj, literal: false });
+        }
+
+        if (pred === RDF_TYPE) {
+          classesMap.set(subj, obj);
+        } else if (pred === RDFS_LABEL && stmt.object.termType === 'Literal') {
+          labelsMap.set(subj, obj);
+        } else {
+          if (stmt.object.termType === 'NamedNode') {
+            if (!nodesMap.has(obj)) {
+              nodesMap.set(obj, { id: obj, literal: false });
+            }
+            linksArray.push({
+              source: subj,
+              target: obj,
+              predicate: pred
+            });
+          } else {
+            const literalId = subj + '::' + pred + '::' + obj;
+            nodesMap.set(literalId, {
+              id: literalId,
+              literal: true,
+              value: obj
+            });
+            linksArray.push({
+              source: subj,
+              target: literalId,
+              predicate: pred
+            });
+          }
+        }
+      });
+
+      const nodesArray = [];
+      nodesMap.forEach((node, key) => {
+        node.classUri = classesMap.get(key) || null;
+        node.label = labelsMap.get(key) || null;
+        nodesArray.push(node);
+      });
+
+      return { nodes: nodesArray, links: linksArray };
+    }
+
+    // Aktualisiert die Graph-Daten und rendert den Graph
+    function updateGraph(rdfString) {
+      const { nodes, links } = parseRDFToGraph(rdfString);
+      currentNodes = nodes;
+      currentLinks = links;
+      renderGraph();
+    }
+
+    function renderGraph() {
+      // Bestehende Elemente entfernen
+      linkGroup.selectAll('line').remove();
+      linkLabelGroup.selectAll('text').remove();
+      nodeGroup.selectAll('g').remove();
+
+      // Kanten rendern
+      const linkSelection = linkGroup
+        .selectAll('line')
+        .data(currentLinks)
+        .enter()
+        .append('line')
+        .attr('stroke-width', 2)
+        .attr('marker-end', 'url(#arrowhead)')
+        .on('dblclick', (event, d) => {
+          handleLinkEdit(d);
+        })
+        .on('contextmenu', (event, d) => {
+          if(!viewMode) showContextMenu(event, d, 'link');
+        });
+
+      // Kantenbeschriftungen
+      const linkLabelSelection = linkLabelGroup
+        .selectAll('text')
+        .data(currentLinks)
+        .enter()
+        .append('text')
+        .attr('class', 'link-label')
+        .text(d => shortenUri(d.predicate));
+
+      // Knoten rendern
+      const nodeSelection = nodeGroup
+        .selectAll('g')
+        .data(currentNodes)
+        .enter()
+        .append('g')
+        .call(d3.drag()
+          .on('start', dragstarted)
+          .on('drag', dragged)
+          .on('end', dragended)
+        )
+        .on('dblclick', (event, d) => {
+          handleNodeEdit(d);
+        })
+        .on('contextmenu', (event, d) => {
+          event.preventDefault();
+          if(!viewMode) showContextMenu(event, d, 'node');
+        });
+
+      nodeSelection.each(function(d) {
+        if (d.literal) {
+          d3.select(this)
+            .append('rect')
+            .attr('x', -10)
+            .attr('y', -10)
+            .attr('width', 20)
+            .attr('height', 20)
+            .attr('fill', d.classUri ? classColor(d.classUri) : '#ff7f0e');
+        } else {
+          d3.select(this)
+            .append('circle')
+            .attr('r', 12)
+            .attr('fill', d.classUri ? classColor(d.classUri) : '#999');
+        }
+      });
+
+      nodeSelection.append('text')
+        .attr('dy', -16)
+        .text(d => d.label ? d.label : (d.literal ? d.value : shortenUri(d.id)));
+
+      simulation.nodes(currentNodes).on('tick', ticked);
+      simulation.force('link').links(currentLinks);
+      simulation.alpha(1).restart();
+
+      function ticked() {
+        linkSelection
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+        linkLabelSelection
+          .attr('x', d => (d.source.x + d.target.x) / 2)
+          .attr('y', d => (d.source.y + d.target.y) / 2);
+        nodeSelection
+          .attr('transform', d => `translate(${d.x}, ${d.y})`);
+      }
+    }
+
+    // Kürzt URIs für die Anzeige
+    function shortenUri(uri) {
+      const parts = uri.split(/[\/#]/);
+      return parts[parts.length - 1] || uri;
+    }
+
+    // D3 Drag-Funktionen
+    function dragstarted(event, d) {
+      simulation.alphaTarget(0.3).restart();
+
+      // Wenn die Physik deaktiviert ist, fixiere den Knoten an der aktuellen Position
+      if (!isPhysicsEnabled) {
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+    }
+
+    function dragged(event, d) {
+      // Setze die Position des Knotens auf die Mausposition
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+
+      // Wenn die Physik deaktiviert ist, lasse den Knoten an seiner Position
+      if (!isPhysicsEnabled) {
+        d.fx = d.x;
+        d.fy = d.y;
+        simulation.alphaTarget(0).stop();
+      } else {
+        // Wenn die Physik aktiviert ist, entferne die Fixierung, damit der Knoten der Simulation folgt
+        d.fx = null;
+        d.fy = null;
+        simulation.alphaTarget(0);
+      }
+    }
+
+    // Editieren und Entfernen von Knoten/Kanten
+    function handleNodeEdit(d) {
+      const newLabel = prompt('Enter new label:', d.label || '');
+      if (newLabel !== null) {
+        d.label = newLabel;
+        renderGraph();
+        notifyEditorGraphChanged();
+      }
+    }
+    function handleLinkEdit(link) {
+      const newLabel = prompt('Edit Link Label', link.predicate);
+      if (newLabel !== null && newLabel !== link.predicate) {
+        link.predicate = newLabel;
+        renderGraph();
+        notifyEditorGraphChanged();
+      }
+    }
+    function handleNodeRemove(node) {
+      if (confirm('Are you sure you want to remove this node?')) {
+        currentNodes = currentNodes.filter(n => n !== node);
+        currentLinks = currentLinks.filter(link => link.source !== node && link.target !== node);
+        renderGraph();
+        notifyEditorGraphChanged();
+      }
+    }
+    function handleLinkRemove(link) {
+      if (confirm('Are you sure you want to remove this link?')) {
+        currentLinks = currentLinks.filter(l => l !== link);
+        renderGraph();
+        notifyEditorGraphChanged();
+      }
+    }
+
+    // Ermöglicht das Hinzufügen von Knoten per Klick – hier über die Taste "n" aktivierbar
+    let isAddingNode = false;
+    graphContainer.addEventListener('click', (event) => {
+      if (!isAddingNode) return;
+      event.stopPropagation();
+      graphContainer.classList.remove('highlight');
+      const rect = graphContainer.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      addNewNode(x, y);
+      isAddingNode = false;
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'n') {
+        if(!viewMode){
+          isAddingNode = true;
+          graphContainer.classList.add('highlight');
+        }
+      }
+    });
+    function addNewNode(x, y) {
+      const newId = 'http://example.org/newNode-' + Date.now();
+      const newNode = {
+        id: newId,
+        literal: false,
+        classUri: null,
+        label: '',
+        x, y,
+        fx: x, fy: y
+      };
+      const newLabel = prompt('Enter label for the new node:', 'New Node');
+      if (newLabel !== null && newLabel !== '') {
+        newNode.label = newLabel;
+        currentNodes.push(newNode);
+        renderGraph();
+        notifyEditorGraphChanged();
+      }
+    }
+
+    function notifyEditorGraphChanged() {
+      window.parent.postMessage({ type: 'graphUpdated', currentLinks: currentLinks, currentNodes: currentNodes }, '*');
+    }
+
+
+    // Empfängt Nachrichten vom Editor
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'updateRDF') {
+        updateGraph(event.data.rdf);
+      }
+    });
+
+    // Empfängt Nachrichten vom Editor
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'enableViewMode') {
+        viewMode = true;
+      }
+    });
+
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'addNode') {
+        isAddingNode = true;
+        graphContainer.classList.add('highlight');
+      }
+    });
+
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'togglePhysics') {
+        isPhysicsEnabled = !isPhysicsEnabled;
+
+        if (isPhysicsEnabled) {
+            // Physik aktivieren: Simulation starten
+          simulation.alphaTarget(1).restart();
+        } else {
+          // Physik deaktivieren: Simulation stoppen
+          simulation.alphaTarget(0).stop();
+        }
+      }
+
+    });
+
+    // Initialer Graphaufbau mit Default-RDF
+    const defaultRDF = `@prefix ex: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Alice a ex:Person ;
+        ex:knows ex:Bob, ex:Charlie ;
+        rdfs:label "Alice" .
+
+ex:Bob a ex:Person ;
+       rdfs:label "Bob" .
+
+ex:Charlie a ex:Person ;
+           rdfs:label "Charlie" .
+
+ex:Place1 a ex:Place ;
+          rdfs:label "Wonderland" ;
+          ex:locatedIn "Somewhere far away" .`;
+    updateGraph(defaultRDF);
+  </script>
+</body>
+</html>
