@@ -403,7 +403,14 @@ document.body.appendChild(contextMenu);
         .enter()
         .append('line')
         .attr('stroke-width', 2)
-        .attr('marker-end', 'url(#arrowhead)'); // Attach the arrowhead marker
+        .attr('marker-end', 'url(#arrowhead)') // Attach the arrowhead marker
+        .on('dblclick', (event, d) => {
+          handleLinkEdit(d);
+        })
+        .on('contextmenu', (event, d) => {
+            event.preventDefault();
+            showContextMenu(event, d, 'link');  // Zeige das benutzerdefinierte Kontextmenü
+        });
 
       // Link labels
       const linkLabelSelection = linkLabelGroup
@@ -431,7 +438,7 @@ document.body.appendChild(contextMenu);
         })
         .on('contextmenu', (event, d) => {
             event.preventDefault();  // Verhindert das Standard-Browser-Kontextmenü
-            showContextMenu(event, d);  // Zeige das benutzerdefinierte Kontextmenü
+            showContextMenu(event, d, 'node');  // Zeige das benutzerdefinierte Kontextmenü
         });
 
       // Node shapes & colors
@@ -530,15 +537,28 @@ document.body.appendChild(contextMenu);
       if (newLabel !== null) {
         d.label = newLabel;
         renderGraph();
+        syncEditorWithGraph();
       }
     }
 
-    let clickedNode = null;
+    function handleLinkEdit(link) {
+        const newLabel = prompt("Edit Link Label", link.predicate);  // 'link.predicate' ist das Label der Kante
 
-    function showContextMenu(event, node) {
+        if (newLabel !== null && newLabel !== link.predicate) {
+            // Wenn der Benutzer einen neuen Wert eingibt und dieser sich vom alten unterscheidet
+            link.predicate = newLabel;
+
+            renderGraph();
+            syncEditorWithGraph();
+        }
+    }
+
+    let clickedElement = null;
+
+    function showContextMenu(event, element, type) {
 
         document.getElementById('graph-container').addEventListener('click', closeContextMenuOnClick);
-        clickedNode = node;
+        clickedElement = element;
 
       // Erstelle das Kontextmenü dynamisch, wenn es noch nicht vorhanden ist
       let contextMenu = document.getElementById('context-menu');
@@ -557,7 +577,11 @@ document.body.appendChild(contextMenu);
         const editOption = document.createElement('div');
         editOption.textContent = 'Edit';
         editOption.addEventListener('click', () => {
-            handleNodeEdit(clickedNode);
+            if(type === 'node'){
+                handleNodeEdit(clickedElement);
+            }else if (type === 'link'){
+                handleLinkEdit(clickedElement);
+            }
             hideContextMenu();
         });
         contextMenu.appendChild(editOption);
@@ -566,7 +590,11 @@ document.body.appendChild(contextMenu);
         const removeOption = document.createElement('div');
         removeOption.textContent = 'Remove';
         removeOption.addEventListener('click', () => {
-            handleNodeRemove(clickedNode);
+            if(type === 'node'){
+                handleNodeRemove(clickedElement);
+            }else if (type === 'link'){
+                handleLinkRemove(clickedElement);
+            }
             hideContextMenu();
         });
         contextMenu.appendChild(removeOption);
@@ -587,7 +615,7 @@ document.body.appendChild(contextMenu);
         if (contextMenu) {
             contextMenu.style.display = 'none';
         }
-        clickedNode = null;
+        clickedElement = null;
     }
     function closeContextMenuOnClick(event) {
         const contextMenu = document.getElementById('context-menu');
@@ -615,6 +643,20 @@ document.body.appendChild(contextMenu);
     syncEditorWithGraph()
         }
     }
+
+    // Funktion zum Entfernen eines Links
+    function handleLinkRemove(link) {
+    const confirmRemove = confirm('Are you sure you want to remove this link?');
+    if (confirmRemove) {
+        // Entferne die Kante aus der Liste der Kanten
+        currentLinks = currentLinks.filter(l => l !== link);
+
+        // Neu rendern des Graphen nach dem Entfernen
+        renderGraph();
+        syncEditorWithGraph();
+    }
+}
+
 
     /**************************************************
      * 7. Serialize graph -> Turtle -> put in <textarea>
