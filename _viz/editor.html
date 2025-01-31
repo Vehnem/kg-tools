@@ -242,6 +242,8 @@ contextMenu.style.border = '1px solid #ccc';
 contextMenu.style.padding = '5px';
 contextMenu.style.display = 'none';
 contextMenu.style.zIndex = 1000;
+contextMenu.style.userSelect = 'none';  // Verhindert die Textauswahl im Menü
+contextMenu.style.cursor = 'default';   // Normaler Mauszeiger für das gesamte Kontextmenü
 document.body.appendChild(contextMenu);
 
     // RDF constants
@@ -571,11 +573,20 @@ document.body.appendChild(contextMenu);
         contextMenu.style.padding = '5px';
         contextMenu.style.display = 'none';
         contextMenu.style.zIndex = 1000;
+        contextMenu.style.userSelect = 'none';  // Verhindert die Textauswahl im Menü
+        contextMenu.style.cursor = 'default';   // Normaler Mauszeiger für das gesamte Kontextmenü
+
         document.body.appendChild(contextMenu);
 
         // Option "Edit"
         const editOption = document.createElement('div');
         editOption.textContent = 'Edit';
+        editOption.addEventListener('mouseover', () => {
+            editOption.style.backgroundColor = '#e0e0e0';
+        })
+        editOption.addEventListener('mouseout', () => {
+            editOption.style.backgroundColor = '';
+        })
         editOption.addEventListener('click', () => {
             if(type === 'node'){
                 handleNodeEdit(clickedElement);
@@ -589,6 +600,12 @@ document.body.appendChild(contextMenu);
         // Option "Remove"
         const removeOption = document.createElement('div');
         removeOption.textContent = 'Remove';
+        removeOption.addEventListener('mouseover', () => {
+            removeOption.style.backgroundColor = '#e0e0e0';
+        })
+        removeOption.addEventListener('mouseout', () => {
+            removeOption.style.backgroundColor = '';
+        })
         removeOption.addEventListener('click', () => {
             if(type === 'node'){
                 handleNodeRemove(clickedElement);
@@ -631,16 +648,16 @@ document.body.appendChild(contextMenu);
     function handleNodeRemove(node) {
         const confirmRemove = confirm('Are you sure you want to remove this node?');
         if (confirmRemove) {
-        // Entferne den Knoten aus der Liste
+            // Entferne den Knoten aus der Liste
             currentNodes = currentNodes.filter(n => n !== node);
 
-        // Entferne alle Kanten, die den Knoten als Quelle oder Ziel haben
-        currentLinks = currentLinks.filter(link => link.source !== node && link.target !== node);
+            // Entferne alle Kanten, die den Knoten als Quelle oder Ziel haben
+            currentLinks = currentLinks.filter(link => link.source !== node && link.target !== node);
 
 
-    // Neu rendern des Graphen nach dem Entfernen
-    renderGraph();
-    syncEditorWithGraph()
+            // Neu rendern des Graphen nach dem Entfernen
+            renderGraph();
+            syncEditorWithGraph()
         }
     }
 
