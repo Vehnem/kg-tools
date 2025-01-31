@@ -180,7 +180,8 @@ function saveGraphToStorage() {
     const svg = d3.select('#graph-container')
       .append('svg')
       .attr('width', width)
-      .attr('height', height);
+      .attr('height', height)
+      .append('g');
 
     // A big transparent background to catch clicks for "new node"
     svg.append('rect')
@@ -218,6 +219,17 @@ function saveGraphToStorage() {
       .force('link', d3.forceLink().id(d => d.id).distance(100))
       .force('charge', d3.forceManyBody().strength(-400))
       .force('center', d3.forceCenter(width / 2, height / 2));
+
+    //Zoom
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 10])  // Min- und Max-Skalierung für den Zoom
+      .on("zoom", (event) => {
+        svg.attr("transform", event.transform);  // Diese Zeile verschiebt oder skaliert das <g>-Tag basierend auf dem Zoom-Event
+      });
+
+    // Anwenden des Zoom-Handlers auf das SVG-Element
+    d3.select("#graph-container svg")
+      .call(zoom);
 
     /**************************************************
      * 4. Parse RDF => set currentNodes/currentLinks
