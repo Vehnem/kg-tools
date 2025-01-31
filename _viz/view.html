@@ -32,6 +32,28 @@
       position: relative;
       background-color: #333;
     }
+        /* Button and text input styling for the link */
+    #link-input-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      gap: 10px;
+    }
+
+    #link-input-container input {
+      padding: 5px;
+      width: 200px;
+    }
+
+    #link-input-container button {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
     /* Node styling */
     .node circle {
       stroke: #fff;
@@ -93,6 +115,11 @@
     <!-- D3 Visualization -->
   </div>
 
+   <div id="link-input-container">
+    <input type="text" id="rdf-source-input" placeholder="Enter RDF Source URL" />
+    <button id="load-rdf-button">Load RDF</button>
+  </div>
+
   <!-- D3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <!-- rdflib.js -->
@@ -108,6 +135,20 @@
     } else {
       rdfSourceUrl = "https://raw.githubusercontent.com/taurenshaman/semantic-web/cee9e421eed3f31a602f82375fb92fb109d638b7/data/w3.org/w3-person.ttl" //  "https://dbpedia.org/data/Erhard_Rahm.ttl"
     }
+
+    document.getElementById('rdf-source-input').value = rdfSourceUrl;
+
+
+    function loadRdfFromInput() {
+      const userInputUrl = document.getElementById('rdf-source-input').value;
+      if (userInputUrl) {
+        parseAndSetGraph(userInputUrl);
+      }
+    }
+
+    // Event listener for the button
+    document.getElementById('load-rdf-button').addEventListener('click', loadRdfFromInput);
+
 
     console.log("source "+rdfSourceUrl)
 
