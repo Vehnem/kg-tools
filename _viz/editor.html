@@ -606,6 +606,10 @@ document.body.appendChild(contextMenu);
         // Entferne den Knoten aus der Liste
             currentNodes = currentNodes.filter(n => n !== node);
 
+        // Entferne alle Kanten, die den Knoten als Quelle oder Ziel haben
+        currentLinks = currentLinks.filter(link => link.source !== node && link.target !== node);
+
+
     // Neu rendern des Graphen nach dem Entfernen
     renderGraph();
     syncEditorWithGraph()
