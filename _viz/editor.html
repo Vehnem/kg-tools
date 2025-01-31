@@ -235,7 +235,10 @@ document.getElementById('graph-container').addEventListener('click', (event, d) 
 });
 
 // Füge das Kontextmenü zum Dokument hinzu
-const contextMenu = document.createElement('div');
+
+let contextMenu = document.getElementById('context-menu');
+contextMenu = document.createElement('div');
+contextMenu.id = 'context-menu';
 contextMenu.style.position = 'absolute';
 contextMenu.style.backgroundColor = 'white';
 contextMenu.style.border = '1px solid #ccc';
@@ -244,7 +247,29 @@ contextMenu.style.display = 'none';
 contextMenu.style.zIndex = 1000;
 contextMenu.style.userSelect = 'none';  // Verhindert die Textauswahl im Menü
 contextMenu.style.cursor = 'default';   // Normaler Mauszeiger für das gesamte Kontextmenü
+
 document.body.appendChild(contextMenu);
+// Option "Edit"
+const editOption = document.createElement('div');
+editOption.textContent = 'Edit';
+editOption.addEventListener('mouseover', () => {
+    editOption.style.backgroundColor = '#e0e0e0';
+})
+editOption.addEventListener('mouseout', () => {
+    editOption.style.backgroundColor = '';
+})
+contextMenu.appendChild(editOption);
+
+// Option "Remove"
+const removeOption = document.createElement('div');
+removeOption.textContent = 'Remove';
+removeOption.addEventListener('mouseover', () => {
+    removeOption.style.backgroundColor = '#e0e0e0';
+})
+removeOption.addEventListener('mouseout', () => {
+    removeOption.style.backgroundColor = '';
+})
+contextMenu.appendChild(removeOption);
 
     // RDF constants
     const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
@@ -562,31 +587,7 @@ document.body.appendChild(contextMenu);
         document.getElementById('graph-container').addEventListener('click', closeContextMenuOnClick);
         clickedElement = element;
 
-      // Erstelle das Kontextmenü dynamisch, wenn es noch nicht vorhanden ist
-      let contextMenu = document.getElementById('context-menu');
-      if (!contextMenu) {
-        contextMenu = document.createElement('div');
-        contextMenu.id = 'context-menu';
-        contextMenu.style.position = 'absolute';
-        contextMenu.style.backgroundColor = 'white';
-        contextMenu.style.border = '1px solid #ccc';
-        contextMenu.style.padding = '5px';
-        contextMenu.style.display = 'none';
-        contextMenu.style.zIndex = 1000;
-        contextMenu.style.userSelect = 'none';  // Verhindert die Textauswahl im Menü
-        contextMenu.style.cursor = 'default';   // Normaler Mauszeiger für das gesamte Kontextmenü
 
-        document.body.appendChild(contextMenu);
-
-        // Option "Edit"
-        const editOption = document.createElement('div');
-        editOption.textContent = 'Edit';
-        editOption.addEventListener('mouseover', () => {
-            editOption.style.backgroundColor = '#e0e0e0';
-        })
-        editOption.addEventListener('mouseout', () => {
-            editOption.style.backgroundColor = '';
-        })
         editOption.addEventListener('click', () => {
             if(type === 'node'){
                 handleNodeEdit(clickedElement);
@@ -594,18 +595,8 @@ document.body.appendChild(contextMenu);
                 handleLinkEdit(clickedElement);
             }
             hideContextMenu();
-        });
-        contextMenu.appendChild(editOption);
+        }, {once: true});
 
-        // Option "Remove"
-        const removeOption = document.createElement('div');
-        removeOption.textContent = 'Remove';
-        removeOption.addEventListener('mouseover', () => {
-            removeOption.style.backgroundColor = '#e0e0e0';
-        })
-        removeOption.addEventListener('mouseout', () => {
-            removeOption.style.backgroundColor = '';
-        })
         removeOption.addEventListener('click', () => {
             if(type === 'node'){
                 handleNodeRemove(clickedElement);
@@ -613,9 +604,8 @@ document.body.appendChild(contextMenu);
                 handleLinkRemove(clickedElement);
             }
             hideContextMenu();
-        });
-        contextMenu.appendChild(removeOption);
-      }
+        }, {once: true});
+
 
       // Positioniere das Kontextmenü
       contextMenu.style.left = `${event.clientX}px`;
