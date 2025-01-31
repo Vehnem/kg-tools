@@ -118,6 +118,8 @@
    <div id="link-input-container">
     <input type="text" id="rdf-source-input" placeholder="Enter RDF Source URL" />
     <button id="load-rdf-button">Load RDF</button>
+    <button id="toggle-physics-button">Toggle Physics</button>
+
   </div>
 
   <!-- D3.js -->
@@ -256,10 +258,41 @@ function saveGraphToStorage() {
     const nodeGroup = svg.append('g').attr('class', 'node');
 
     // Force simulation
-    const simulation = d3.forceSimulation()
-      .force('link', d3.forceLink().id(d => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-400))
-      .force('center', d3.forceCenter(width / 2, height / 2));
+// Button für das Umschalten der Physik
+const togglePhysicsButton = document.getElementById('toggle-physics-button');
+
+// Zustand der Force-Simulation (aktiviert oder deaktiviert)
+let isPhysicsEnabled = true;
+
+// Force-Simulation
+
+const simulation = d3.forceSimulation()
+  .force('link', d3.forceLink().id(d => d.id).distance(100))
+  .force('charge', d3.forceManyBody().strength(-400))
+  .force('center', d3.forceCenter(width / 2, height / 2));
+
+// Funktion zum Umschalten der Physik
+function togglePhysics() {
+  isPhysicsEnabled = !isPhysicsEnabled;
+
+  if (isPhysicsEnabled) {
+    // Physik aktivieren: Simulation starten
+    simulation.alphaTarget(1).restart();
+    togglePhysicsButton.textContent = 'Disable Physics'; // Button-Text ändern
+  } else {
+    // Physik deaktivieren: Simulation stoppen
+    simulation.alphaTarget(0).stop();
+    togglePhysicsButton.textContent = 'Enable Physics'; // Button-Text ändern
+  }
+}
+
+
+// Event Listener für den Button
+togglePhysicsButton.addEventListener('click', togglePhysics);
+
+
+
+
 
     //Zoom
     const zoom = d3.zoom()
@@ -447,6 +480,7 @@ const { nodes, links } = parseRDFToGraph(rdfString);
         .text(d => d.label ? d.label : (d.literal ? d.value : shortenUri(d.id)));
 
       // --- Force simulation ---
+
       simulation
         .nodes(currentNodes)
         .on('tick', ticked);
@@ -454,7 +488,8 @@ const { nodes, links } = parseRDFToGraph(rdfString);
       simulation.force('link')
         .links(currentLinks);
 
-      simulation.alpha(1).restart();
+
+
 
       function ticked() {
         linkSelection
@@ -499,22 +534,37 @@ function shortenUri(uri) {
         /**************************************************
      * 9. D3 Drag Behavior
      **************************************************/
-     function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    }
+function dragstarted(event, d) {
+  simulation.alphaTarget(0.3).restart();
 
-    function dragged(event, d) {
-      d.fx = event.x;
-      d.fy = event.y;
-    }
+  // Wenn die Physik deaktiviert ist, fixiere den Knoten an der aktuellen Position
+  if (!isPhysicsEnabled) {
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+}
 
-    function dragended(event, d) {
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
-    }
+function dragged(event, d) {
+  // Setze die Position des Knotens auf die Mausposition
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+function dragended(event, d) {
+
+  // Wenn die Physik deaktiviert ist, lasse den Knoten an seiner Position
+  if (!isPhysicsEnabled) {
+    d.fx = d.x;
+    d.fy = d.y;
+    simulation.alphaTarget(0).stop();
+  } else {
+    // Wenn die Physik aktiviert ist, entferne die Fixierung, damit der Knoten der Simulation folgt
+    d.fx = null;
+    d.fy = null;
+    simulation.alphaTarget(0);
+  }
+}
+
 
   </script>
 </body>
