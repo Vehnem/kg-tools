@@ -74,7 +74,7 @@
     let currentNodes = [];
     let currentLinks = [];
     let isPhysicsEnabled = true;
-    let allowContextMenu = true;
+    let viewMode = false;
 
     const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
     const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
@@ -282,7 +282,7 @@
           handleLinkEdit(d);
         })
         .on('contextmenu', (event, d) => {
-          if(allowContextMenu) showContextMenu(event, d, 'link');
+          if(!viewMode) showContextMenu(event, d, 'link');
         });
 
       // Kantenbeschriftungen
@@ -310,7 +310,7 @@
         })
         .on('contextmenu', (event, d) => {
           event.preventDefault();
-          if(allowContextMenu) showContextMenu(event, d, 'node');
+          if(!viewMode) showContextMenu(event, d, 'node');
         });
 
       nodeSelection.each(function(d) {
@@ -437,8 +437,10 @@
     });
     window.addEventListener('keydown', (event) => {
       if (event.key === 'n') {
-        isAddingNode = true;
-        graphContainer.classList.add('highlight');
+        if(!viewMode){
+          isAddingNode = true;
+          graphContainer.classList.add('highlight');
+        }
       }
     });
     function addNewNode(x, y) {
@@ -456,6 +458,7 @@
         newNode.label = newLabel;
         currentNodes.push(newNode);
         renderGraph();
+        notifyEditorGraphChanged();
       }
     }
 
@@ -473,8 +476,15 @@
 
     // Empfängt Nachrichten vom Editor
     window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'deactivateContextMenu') {
-        allowContextMenu = false;
+      if (event.data && event.data.type === 'enableViewMode') {
+        viewMode = true;
+      }
+    });
+
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'addNode') {
+        isAddingNode = true;
+        graphContainer.classList.add('highlight');
       }
     });
 

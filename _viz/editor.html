@@ -58,6 +58,7 @@ ex:Place1 a ex:Place ;
     <button id="update-button">Re-Parse RDF</button>
     <button id="reset-button">Reset Graph</button>
     <button id="toggle-physics-button">Toggle Physics</button>
+    <button id="add-node-button">Add Node</button>
   </div>
 
   <!-- Der Graph wird in einem iframe geladen -->
@@ -78,25 +79,20 @@ ex:Place1 a ex:Place ;
     const updateButton = document.getElementById('update-button');
     const resetButton = document.getElementById('reset-button');
     const togglePhysicsButton = document.getElementById('toggle-physics-button');
+    const addNodeButton = document.getElementById('add-node-button');
     const graphIframe = document.getElementById('graph-iframe');
 
 
-      const defaultRDF = `@prefix ex: <http://example.org/> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+      const defaultRDF = `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix ex: <http://example.org/>.
 
-ex:Alice a ex:Person ;
-        ex:knows ex:Bob, ex:Charlie ;
-        rdfs:label "Alice" .
+ex:Alice a ex:Person; ex:knows ex:Bob, ex:Charlie; rdfs:label "Alice".
 
-ex:Bob a ex:Person ;
-       rdfs:label "Bob" .
+ex:Bob a ex:Person; rdfs:label "Bob".
 
-ex:Charlie a ex:Person ;
-           rdfs:label "Charlie" .
+ex:Charlie a ex:Person; rdfs:label "Charlie".
 
-ex:Place1 a ex:Place ;
-          rdfs:label "Wonderland" ;
-          ex:locatedIn "Somewhere far away" .`;
+ex:Place1 a ex:Place; ex:locatedIn "Somewhere far away"; rdfs:label "Wonderland".`;
 
 
     window.onload = () => loadGraphFromStorage();
@@ -121,12 +117,19 @@ ex:Place1 a ex:Place ;
       graphIframe.contentWindow.postMessage({ type: 'updateRDF', rdf: rdfText }, '*');
     }
 
+    function addNode() {
+      graphIframe.contentWindow.postMessage({ type: 'addNode'}, '*');
+    }
+
     updateButton.addEventListener('click', sendRDFToGraph);
 
     resetButton.addEventListener('click', () => {
       rdfInput.value = defaultRDF;
       sendRDFToGraph();
     });
+
+
+    addNodeButton.addEventListener('click', addNode);
 
 
     function togglePhysics() {

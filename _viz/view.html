@@ -54,8 +54,8 @@
 
     //If I Frame loaded
     graphIframe.onload = () => {
-      //Deactivate Context Menu
-      graphIframe.contentWindow.postMessage({ type: 'deactivateContextMenu' }, '*');
+      //Enable View Mode => Deactivate Context Menu + Deactivate Node adding
+      graphIframe.contentWindow.postMessage({ type: 'enableViewMode' }, '*');
     };
 
     function sendRDFToGraph() {
