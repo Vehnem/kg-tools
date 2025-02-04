@@ -58,7 +58,30 @@
       graphIframe.contentWindow.postMessage({ type: 'enableViewMode' }, '*');
     };
 
+    window.addEventListener('load', () => {
+      const sourceUrl = getURLParameter('source');
+      if (sourceUrl) {
+        rdfInput.value = sourceUrl;
+        sendRDFToGraph();
+      }
+    });
+
+    function updateURLParameter(name, value) {
+      const url = new URL(window.location);
+      if (value) {
+        url.searchParams.set(name, value);
+      } else {
+        url.searchParams.delete(name);
+      }
+      window.history.replaceState({}, '', url);
+    }
+
+    function getURLParameter(name) {
+      return new URL(window.location).searchParams.get(name);
+    }
+
     function sendRDFToGraph() {
+
       const rdfUrl = rdfInput.value;
       if (!rdfUrl) return;
 
@@ -83,7 +106,10 @@
 
     togglePhysicsButton.addEventListener('click', togglePhysics);
 
-    updateButton.addEventListener('click', sendRDFToGraph);
+    updateButton.addEventListener('click', () => {
+      updateURLParameter('source', rdfInput.value);
+      sendRDFToGraph();
+    });
 
 
   </script>
