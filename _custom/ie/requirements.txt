@@ -1,0 +1,3 @@
+spacy
+pandas
+crosslingual_coreference
