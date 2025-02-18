@@ -1,4 +1,9 @@
-Requirement: kg-testdata cloned in home directory
+# Simplest Way to run Agreement Maker
+### Requirements
+- kg-testdata cloned in home directory
+- Oracle Java 1.7, 1.8, 1.9 or OpenJDK 1.8 installed (not tested for other versions)
+
+### Installation Instruction
 
 Download and unzip https://github.com/AgreementMakerLight/AML-Project/releases/download/v3.2/AML_v3.2.zip
 ```
