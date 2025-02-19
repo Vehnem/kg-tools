@@ -17,8 +17,7 @@ download:
 test:
 	mkdir -p $(OUTPUT_DIR); \
 	cp $(AM_DIR)/source.rdf $(INSTALL_DIR)/AML_v3.2/; \
-	cp $(AM_DIR)/target.rdf $(INSTALL_DIR)/AML_v3.2/
-	mkdir -p $(OUTPUT_DIR); \
+	cp $(AM_DIR)/target.rdf $(INSTALL_DIR)/AML_v3.2/; \
 	java -jar $(INSTALL_DIR)/AML_v3.2/*.jar -a -s $(INSTALL_DIR)/AML_v3.2/source.rdf -t $(INSTALL_DIR)/AML_v3.2/target.rdf -o $(OUTPUT_DIR)/output.rdf
 
 clean:
