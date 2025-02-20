@@ -1,0 +1,8 @@
+elasticsearch
+spacy
+Flask
+matplotlib
+requests
+pyspotlight
+SPARQLWrapper
+editdistance
