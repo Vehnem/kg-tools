@@ -17,6 +17,8 @@ Replace all ElasticSearch Endpoints with local endpoint (es = Elasticsearch(['ht
 
 Remove doc_type parameter from all es.search and es.index function calls
 
+Update WikiData and DBpedia URLs
+
 Install requirements
 ```
 pip install -r requirements.txt
