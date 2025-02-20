@@ -1,6 +1,5 @@
 # Simplest Way to run Agreement Maker
 ### Requirements
-- kg-testdata cloned in home directory
 - pkg-config
 - python ssl
 - elasticdump
@@ -17,6 +16,7 @@ Replace all ElasticSearch Endpoints with local endpoint (es = Elasticsearch(['ht
 
 Remove doc_type parameter from all es.search and es.index function calls
 
+Remove try except block in main.py in evaluate() funtion
 Update WikiData and DBpedia URLs
 
 Install requirements
