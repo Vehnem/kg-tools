@@ -43,7 +43,7 @@ sudo systemctl start elasticsearch
 Import Data to ElasticSearch (set Limit according to hardware specs)
 ```
 elasticdump --output=http://localhost:9200/wikidataentityindex/ --input=wikidataentity.json --type=data --limit=10000
-elasticdump --output=http://localhost:9200/wikidatapropertyindex/ --input=wikidataproperty.json --type=data --limit=10000
+elasticdump --output=http://localhost:9200/wikidatapropertyindex/ --input=wikidatapropertyindex.json --type=data --limit=10000
 ```
 
 Run main.py

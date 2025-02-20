@@ -29,7 +29,7 @@ elasticsearch:
 	unzip -o $(INSTALL_DIR)/wikidata_dump.zip -d $(INSTALL_DIR) && \
 	rm $(INSTALL_DIR)/wikidata_dump.zip
 	. $(VENV_DIR)/bin/activate && elasticdump --output=$(ES_HOST)/wikidataentityindex/ --input=$(INSTALL_DIR)/wikidataentity.json --type=data --limit=5000
-	. $(VENV_DIR)/bin/activate && elasticdump --output=$(ES_HOST)/wikidatapropertyindex/ --input=$(INSTALL_DIR)/wikidataproperty.json --type=data --limit=5000
+	. $(VENV_DIR)/bin/activate && elasticdump --output=$(ES_HOST)/wikidatapropertyindex/ --input=$(INSTALL_DIR)/wikidatapropertyindex.json --type=data --limit=5000
 
 test:
 	mkdir -p $(OUTPUT_DIR)
