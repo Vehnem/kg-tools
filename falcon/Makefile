@@ -1,9 +1,6 @@
 INSTALL_DIR := $(CURDIR)/bin
-OUTPUT_DIR := $(CURDIR)/target
-KG_TESTDATA ?= $(HOME)/kg-testdata
-FALCON_DIR := $(KG_TESTDATA)/_snippets/falcon
 ES_HOST := http://localhost:9200
-VENV_DIR := $(INSTALL_DIR)/.venv
+VENV_DIR := .venv
 
 .PHONY: all install update elasticsearch test clean
 
@@ -45,4 +42,4 @@ elasticsearch:
 test:
 	. $(VENV_DIR)/bin/activate && cd $(INSTALL_DIR)/falcon2.0/ && python3 main.py
 clean:
-	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)
+	rm -rf $(INSTALL_DIR) $(VENV_DIR)
