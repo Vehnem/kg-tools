@@ -16,3 +16,5 @@ sample_A, sample_B = em.down_sample(A, B, size=1000, y_param=1, show_progress=Tr
 # Display the number of tuples in the sampled datasets
 print(f"Length Sample A:{len(sample_A)} Length Sample B:{len(sample_B)}")
 
+sample_A.to_csv("./bin/citeseer_sample.csv", index=False)
+sample_B.to_csv("./bin/dblp_sample.csv", index=False)

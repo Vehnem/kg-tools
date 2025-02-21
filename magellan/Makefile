@@ -7,7 +7,7 @@ all: install testDownsampling
 install:
 	mkdir -p $(INSTALL_DIR)
 	python3 -m venv $(VENV_DIR)
-	. $(VENV_DIR)/bin/activate && pip install -U numpy scipy py_entitymatching pyqt5 xgboost pandastable
+	. $(VENV_DIR)/bin/activate && pip install -U numpy scipy py_entitymatching pyqt5 xgboost pandastable ydata-profiling
 	wget -P $(INSTALL_DIR) https://github.com/OpenRefine/OpenRefine/releases/download/3.9.0/openrefine-linux-3.9.0.tar.gz
 	tar xzf openrefine-linux-3.9.0.tar.gz
 	rm openrefine-linux-3.9.0.tar.gz

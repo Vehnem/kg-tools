@@ -6,7 +6,7 @@
 
 Install requirements
 ```
-pip install -U numpy scipy py_entitymatching
+pip install -U numpy scipy py_entitymatching pyqt5 xgboost pandastable ydata-profiling
 ```
 
 Install OpenRefine
