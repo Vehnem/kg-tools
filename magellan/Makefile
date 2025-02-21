@@ -38,5 +38,9 @@ test_data_exploration:
 test_overlap_blocking:
 	$(VENV_DIR)/bin/python3 blocking/overlap_blocking.py
 
+test_bestlearning_matcher:
+	$(VENV_DIR)/bin/python3 matching/bestlearning_matcher.py
+
+
 clean:
 	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)
