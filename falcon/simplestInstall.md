@@ -1,4 +1,4 @@
-# Simplest Way to run Agreement Maker
+# Simplest Way to run Falcon
 ### Requirements
 - pkg-config
 - python ssl
