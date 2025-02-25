@@ -1,6 +1,6 @@
 # Simplest Way to run py_entitymatching
 ### Requirements
-- Python 3.10
+- Python < 3.12
 
 ### Installation Instruction
 
