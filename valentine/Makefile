@@ -10,7 +10,6 @@ all: install test
 install:
 	python3 -m venv $(VENV_DIR)
 	$(VENV_DIR)/bin/pip install valentine
-	pip3 install valentine
 
 test:
 	mkdir -p $(INSTALL_DIR); \
