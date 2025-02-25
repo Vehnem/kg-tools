@@ -1,6 +1,7 @@
 # Simplest Way to run pyjedai
 ### Requirements
 - gcc
+- g++
 
 ### Installation Instruction
 
