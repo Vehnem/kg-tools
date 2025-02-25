@@ -1,6 +1,6 @@
 # Simplest Way to run py_entitymatching
 ### Requirements
-- Java > 11
+- Python 3.10
 
 ### Installation Instruction
 
