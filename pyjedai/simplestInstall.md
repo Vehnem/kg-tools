@@ -1,4 +1,4 @@
-# Simplest Way to run rmlmapper
+# Simplest Way to run pyjedai
 ### Requirements
 - gcc
 
