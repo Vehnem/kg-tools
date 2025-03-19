@@ -1,0 +1,25 @@
+FROM python:3.11
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y wget tar && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /app/.venv
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY /magellan /app/
+
+RUN pip install -U numpy scipy py_entitymatching pyqt5 xgboost pandastable setuptools ydata-profiling
+
+RUN wget -P /app https://github.com/OpenRefine/OpenRefine/releases/download/3.9.0/openrefine-linux-3.9.0.tar.gz \
+    && tar xzf /app/openrefine-linux-3.9.0.tar.gz -C /app \
+    && rm /app/openrefine-linux-3.9.0.tar.gz
+
+RUN sed -i 's/pd.np/np/g' /app/.venv/lib/python3.11/site-packages/py_entitymatching/matcher/matcherutils.py
+
+RUN wget -P /app/bin http://pages.cs.wisc.edu/~anhai/data/falcon_data/citations/citeseer.csv \
+    && wget -P /app/bin http://pages.cs.wisc.edu/~anhai/data/falcon_data/citations/dblp.csv \
+    && wget -P /app/bin https://raw.githubusercontent.com/anhaidgroup/py_entitymatching/refs/heads/master/notebooks/vldb_demo/acm_demo.csv \
+    && wget -P /app/bin https://raw.githubusercontent.com/anhaidgroup/py_entitymatching/refs/heads/master/notebooks/vldb_demo/dblp_demo.csv \
+    && wget -P /app/bin https://raw.githubusercontent.com/anhaidgroup/py_entitymatching/refs/heads/master/notebooks/vldb_demo/labeled_data_demo.csv

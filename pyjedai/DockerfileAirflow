@@ -1,0 +1,18 @@
+FROM python:3.9
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y wget unzip && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY /pyjedai /app/
+
+RUN pip install pyjedai
+
+RUN wget -P /app/bin https://dbs.uni-leipzig.de/files/datasets/Abt-Buy.zip \
+    && unzip /app/bin/Abt-Buy.zip -d /app/bin \
+    && rm /app/bin/Abt-Buy.zip
+
+WORKDIR /app
