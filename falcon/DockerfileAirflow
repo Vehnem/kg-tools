@@ -6,7 +6,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y wget unzip && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /app/.venv
-ENV PATH="/app/.venv/bin:$PATH"
 
 RUN git clone https://github.com/SDM-TIB/falcon2.0.git /app/falcon2.0
 WORKDIR /app/falcon2.0
@@ -34,5 +33,5 @@ WORKDIR /app
 RUN wget -P /app https://figshare.com/ndownloader/files/20168714 -O /app/wikidata_dump.zip \
     && unzip -o /app/wikidata_dump.zip -d /app \
     && rm /app/wikidata_dump.zip
-RUN .venv/bin/activate && elasticdump --output=$ES_HOST/wikidataentityindex/ --input=/app/wikidataentity.json --type=data --limit=5000
-RUN .venv/bin/activate && elasticdump --output=$ES_HOST/wikidatapropertyindex/ --input=/app/wikidatapropertyindex.json --type=data --limit=5000
+RUN /app/.venv/bin/activate && elasticdump --output=$ES_HOST/wikidataentityindex/ --input=/app/wikidataentity.json --type=data --limit=5000
+RUN /app/.venv/bin/activate && elasticdump --output=$ES_HOST/wikidatapropertyindex/ --input=/app/wikidatapropertyindex.json --type=data --limit=5000

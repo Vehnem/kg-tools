@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y wget unzip && rm -rf /var/lib/apt/lists
 RUN python3 -m venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY . /app/
+COPY /pyjedai /app/
 
 RUN pip install pyjedai
 

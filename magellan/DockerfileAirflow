@@ -5,9 +5,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y wget tar && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /app/.venv
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY . /app/
+COPY /magellan /app/
 
 RUN pip install -U numpy scipy py_entitymatching pyqt5 xgboost pandastable setuptools ydata-profiling
 
