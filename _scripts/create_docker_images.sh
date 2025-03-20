@@ -14,7 +14,7 @@ for dir in "$BASE_DIR"/*/; do
     if [[ -f "$dir/DockerfileAirflow" ]]; then
         echo "Dockerfile found in: $dir"
 
-        IMAGE_NAME="kg-tools/${DIR_NAME}_image"
+        IMAGE_NAME="kg-tools/${DIR_NAME,,}_image"
         echo "Create Image: $IMAGE_NAME"
         docker build -t "$IMAGE_NAME" -f "$dir/DockerfileAirflow" "$BASE_DIR"
 

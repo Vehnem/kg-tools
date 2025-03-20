@@ -1,0 +1,24 @@
+FROM python:3.9
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y wget tar && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY . /app/
+
+RUN pip install radboud-el gensim
+
+RUN mkdir -p /app/bin
+
+RUN wget -O /app/bin/generic.tar.gz http://gem.cs.ru.nl/generic.tar.gz \
+    && tar -xzf /app/bin/generic.tar.gz -C /app/bin \
+    && rm /app/bin/generic.tar.gz
+
+RUN wget -O /app/bin/wiki_2019.tar.gz http://gem.cs.ru.nl/wiki_2019.tar.gz \
+    && tar -xzf /app/bin/wiki_2019.tar.gz -C /app/bin \
+    && rm /app/bin/wiki_2019.tar.gz
+
+WORKDIR /app
