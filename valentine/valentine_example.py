@@ -58,9 +58,20 @@ def main():
     for match in matches:
         print(f"{str(match): <60} {matches[match]}")
 
+    # Convert matches to required output format
+    results = []
+    for ((_, left), (_, right)), measure in one_to_one_matches.items():
+        results.append({
+            "left": left,
+            "right": right,
+            "score": float(measure)
+        })
+
+    output_data = {"format": "MatchingJSON", "results": results}
+
     # Save matches to output file
     with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(matches, f, ensure_ascii=False, indent=4)
+        json.dump(output_data, f, ensure_ascii=False, indent=4)
     print(f"Matches saved to {output_file}")
 
 if __name__ == '__main__':
