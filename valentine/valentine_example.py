@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import pandas as pd
@@ -9,33 +10,31 @@ pp = pprint.PrettyPrinter(indent=4, sort_dicts=False)
 
 
 def main():
-
-    if len(sys.argv) != 3:
-        print("Usage: python main.py <path1> <path2>")
+    if len(sys.argv) != 4:
+        print("Usage: python main.py <path1> <path2> <outputfile>")
         sys.exit(1)
 
     path1 = sys.argv[1]
     path2 = sys.argv[2]
+    output_file = sys.argv[3]
 
     # Load data using pandas
-    d1_path = os.path.join(path1)
-    d2_path = os.path.join(path2)
-    df1 = pd.read_csv(d1_path)
-    df2 = pd.read_csv(d2_path)
+    df1 = pd.read_csv(path1)
+    df2 = pd.read_csv(path2)
 
     # Instantiate matcher and run
     matcher = JaccardDistanceMatcher()
     matches = valentine_match(df1, df2, matcher)
 
-    # MatcherResults is a wrapper object that has several useful
-    # utility/transformation functions
+    # Print matches
     print("Found the following matches:")
     pp.pprint(matches)
 
     print("\nGetting the one-to-one matches:")
-    pp.pprint(matches.one_to_one())
+    one_to_one_matches = matches.one_to_one()
+    pp.pprint(one_to_one_matches)
 
-    # If ground truth available valentine could calculate the metrics
+    # If ground truth available, calculate metrics
     ground_truth = [('Cited by', 'Cited by'),
                     ('Authors', 'Authors'),
                     ('EID', 'EID')]
@@ -49,15 +48,20 @@ def main():
     pp.pprint(metrics)
 
     print("\nYou can also get specific metric scores:")
-    pp.pprint(matches.get_metrics(ground_truth, metrics={
+    specific_metrics = matches.get_metrics(ground_truth, metrics={
         PrecisionTopNPercent(n=80),
         F1Score()
-    }))
+    })
+    pp.pprint(specific_metrics)
 
     print("\nThe MatcherResults object is a dict and can be treated such:")
     for match in matches:
         print(f"{str(match): <60} {matches[match]}")
 
+    # Save matches to output file
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(matches, f, ensure_ascii=False, indent=4)
+    print(f"Matches saved to {output_file}")
 
 if __name__ == '__main__':
     main()
