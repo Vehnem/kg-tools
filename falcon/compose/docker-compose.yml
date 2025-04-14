@@ -31,31 +31,30 @@ services:
         condition: service_started
     entrypoint: /bin/bash
     command: >
-        -c "
-        if [ ! -f /dumps/wikidataentity.json ] || [ ! -f /dumps/wikidatapropertyindex.json ]; then
-            echo 'Downloading dump...';
-            wget -P /dumps https://figshare.com/ndownloader/files/20168714 -O /dumps/wikidata_dump.zip &&
-            unzip -o /dumps/wikidata_dump.zip -d /dumps &&
-            rm /dumps/wikidata_dump.zip;
-        else
-            echo 'Dump already exists, skipping download.';
-        fi &&
-    
-        # Check if the indexes already exist in Elasticsearch
-        if ! curl -s -o /dev/null -w "%{http_code}" http://elasticsearch:9200/wikidataentityindex; then
-            echo 'Creating index wikidataentityindex...';
-            elasticdump --output=http://elasticsearch:9200/wikidataentityindex/ --input=/dumps/wikidataentity.json --type=data --limit=100000;
-        else
-            echo 'Index wikidataentityindex already exists, skipping import.';
-        fi &&
-    
-        if ! curl -s -o /dev/null -w "%{http_code}" http://elasticsearch:9200/wikidatapropertyindex; then
-            echo 'Creating index wikidatapropertyindex...';
-            elasticdump --output=http://elasticsearch:9200/wikidatapropertyindex/ --input=/dumps/wikidatapropertyindex.json --type=data --limit=100000;
-        else
-            echo 'Index wikidatapropertyindex already exists, skipping import.';
-        fi"
-
+      -c "
+      if [ ! -f /dumps/wikidataentity.json ] || [ ! -f /dumps/wikidatapropertyindex.json ]; then
+        echo 'Downloading dump...';
+        wget -P /dumps https://figshare.com/ndownloader/files/20168714 -O /dumps/wikidata_dump.zip &&
+        unzip -o /dumps/wikidata_dump.zip -d /dumps &&
+        rm /dumps/wikidata_dump.zip;
+      else
+        echo 'Dump already exists, skipping download.';
+      fi;
+  
+      if [ $(curl -s -o /dev/null -w '%{http_code}' http://elasticsearch:9200/wikidataentityindex) -ne 200 ]; then
+        echo 'Importing wikidataentityindex...';
+        elasticdump --output=http://elasticsearch:9200/wikidataentityindex/ --input=/dumps/wikidataentity.json --type=data --limit=100000;
+      else
+        echo 'wikidataentityindex already exists.';
+      fi;
+  
+      if [ $(curl -s -o /dev/null -w '%{http_code}' http://elasticsearch:9200/wikidatapropertyindex) -ne 200 ]; then
+        echo 'Importing wikidatapropertyindex...';
+        elasticdump --output=http://elasticsearch:9200/wikidatapropertyindex/ --input=/dumps/wikidatapropertyindex.json --type=data --limit=100000;
+      else
+        echo 'wikidatapropertyindex already exists.';
+      fi
+      "
   falconcli:
     build:
       context: .
