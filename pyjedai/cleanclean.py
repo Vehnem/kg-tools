@@ -1,4 +1,5 @@
 import argparse
+import json
 from itertools import product
 
 import data_cleaning
@@ -16,6 +17,7 @@ def main():
     parser.add_argument('--file2', required=True, help='path to file2')
     parser.add_argument('--attr1', required=False, help='comma seperated list of attributes to block for Dataset 1')
     parser.add_argument('--attr2', required=False, help='comma seperated list of attributes to block for Dataset 1')
+    parser.add_argument('--output', required=True, help='output path for EM_JSON')
 
     args = parser.parse_args()
 
@@ -40,9 +42,22 @@ def main():
     pairs_graph = entity_matching.match(candidate_pairs_blocks, data)
 
     # Clustering
-    clusters = unique_mapping_clustering.cluster(pairs_graph, data)
+    #clusters = unique_mapping_clustering.cluster(pairs_graph, data)
 
+    json_output = []
 
+    for node1, node2, data_dict in pairs_graph.edges(data=True):
+        entry = {
+            "entity1": node1,
+            "entity2": node2,
+            "score": float(data_dict.get('weight', 1.0))
+        }
+        json_output.append(entry)
+
+    with open(args.output, 'w', encoding='utf-8') as json_file:
+        json.dump(json_output, json_file, ensure_ascii=False, indent=4)
+
+    print(f"Saved EM_JSON to: {args.output}")
 
 if __name__ == '__main__':
     main()
