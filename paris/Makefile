@@ -15,12 +15,11 @@ test:
 	mkdir -p $(OUTPUT_DIR); \
 	cd $(INSTALL_DIR); \
 	mkdir -p output; \
-#	cp $(PARIS_DIR)/person11.nt .; \
-#	cp $(PARIS_DIR)/person12.nt .; \
-#	java -jar *.jar person11.nt person12.nt output; \
-	java -jar *.jar dbpedia.nt wikidata.nt output; 
-#	mv run*.txt $(OUTPUT_DIR); \
-#	mv output $(OUTPUT_DIR)
+	cp $(PARIS_DIR)/person11.nt .; \
+	cp $(PARIS_DIR)/person12.nt .; \
+	java -jar *.jar person11.nt person12.nt output; \
+	mv run*.txt $(OUTPUT_DIR); \
+	mv output $(OUTPUT_DIR)
 
 clean:
 	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)

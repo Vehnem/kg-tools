@@ -4,3 +4,4 @@ WORKDIR /app
 
 RUN wget https://github.com/dice-group/LIMES/releases/download/1.8.3/limes.jar
 
+RUN wget https://raw.githubusercontent.com/dice-group/LIMES/master/limes-core/resources/lgd-lgd-optional-properties.xml
