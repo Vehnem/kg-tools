@@ -15,3 +15,11 @@ test:
 
 clean:
 	rm -rf $(INSTALL_DIR)
+
+docker_build:
+	echo "TODO"
+
+docker_test:
+	#docker run --rm
+	#docker run --rm -v /data:/data kgtool/corenlp java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,pos,lemma,ner,parse,coref,kbp -file /data/results/foundation-eval/sources/text/Angela_Merkel.txt  -outputFormat json
+	docker run --rm -v /data:/data kgtool/corenlp java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,pos,lemma,depparse,natlog,openie -file /data/results/foundation-eval/sources/text/Angela_Merkel.txt  -outputFormat json

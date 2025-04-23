@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd bin/stanford-corenlp-4.5.8/
+java edu.stanford.nlp.pipeline.StanfordCoreNLP # -annotators tokenize,pos,lemma,ner,parse,coref,kbp -coref.md.type RULE -file 
+
