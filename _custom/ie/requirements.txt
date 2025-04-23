@@ -1,0 +1,4 @@
+jupyter
+spacy
+pandas
+crosslingual_coreference

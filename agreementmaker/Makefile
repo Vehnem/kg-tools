@@ -22,3 +22,9 @@ test:
 
 clean:
 	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)
+
+docker_build:
+	docker build -f DockerfileAirflow -t  kgtool/agreementmaker:latest .
+
+docker_test:
+	docker run --rm -v $(OUTPUT_DIR):/data kgtool/agreementmaker:latest java -jar AgreementMakerLight.jar -a -s /data/source.rdf -t /data/target.rdf -o /data/output2.rdf # java -jar *.jar -h

@@ -1,6 +1,6 @@
 INSTALL_DIR := $(CURDIR)/bin
 OUTPUT_DIR := $(CURDIR)/target
-KG_TESTDATA ?= $(HOME)/kg-testdata
+KG_TESTDATA ?= $(HOME)/papers/kg-testdata
 PARIS_DIR := $(KG_TESTDATA)/_snippets/paris/
 
 .PHONY: all download test clean

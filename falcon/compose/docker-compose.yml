@@ -1,0 +1,68 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: curl -s http://localhost:9200/_cluster/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  elasticdump:
+    build:
+      context: .
+      dockerfile: elasticdump.Dockerfile
+    entrypoint: [ "sleep", "infinity" ]
+
+  falconinit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./dumps:/dumps
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      elasticdump:
+        condition: service_started
+    entrypoint: /bin/bash
+    command: >
+      -c "
+      if [ ! -f /dumps/wikidataentity.json ] || [ ! -f /dumps/wikidatapropertyindex.json ]; then
+        echo 'Downloading dump...';
+        wget -P /dumps https://figshare.com/ndownloader/files/20168714 -O /dumps/wikidata_dump.zip &&
+        unzip -o /dumps/wikidata_dump.zip -d /dumps &&
+        rm /dumps/wikidata_dump.zip;
+      else
+        echo 'Dump already exists, skipping download.';
+      fi;
+  
+      if [ $(curl -s -o /dev/null -w '%{http_code}' http://elasticsearch:9200/wikidataentityindex) -ne 200 ]; then
+        echo 'Importing wikidataentityindex...';
+        elasticdump --output=http://elasticsearch:9200/wikidataentityindex/ --input=/dumps/wikidataentity.json --type=data --limit=100000;
+      else
+        echo 'wikidataentityindex already exists.';
+      fi;
+  
+      if [ $(curl -s -o /dev/null -w '%{http_code}' http://elasticsearch:9200/wikidatapropertyindex) -ne 200 ]; then
+        echo 'Importing wikidatapropertyindex...';
+        elasticdump --output=http://elasticsearch:9200/wikidatapropertyindex/ --input=/dumps/wikidatapropertyindex.json --type=data --limit=100000;
+      else
+        echo 'wikidatapropertyindex already exists.';
+      fi
+      "
+  falconcli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    working_dir: /app/falcon2.0
+    command: python3 main.py
+    profiles:
+      - debug

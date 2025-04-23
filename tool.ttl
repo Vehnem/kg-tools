@@ -1,0 +1,69 @@
+@prefix ex: <http://example.org/schema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Classes
+ex:CLI_Tool a rdfs:Class .
+ex:CLI_Command a rdfs:Class .
+ex:CLI_Parameter a rdfs:Class .
+ex:CLI_Option a rdfs:Class .
+ex:CLI_Output a rdfs:Class .
+ex:CLI_Example a rdfs:Class .
+
+# Properties
+ex:hasCommand a rdfs:Property .
+ex:hasSubcommand a rdfs:Property .
+ex:hasParameter a rdfs:Property .
+ex:hasOption a rdfs:Property .
+ex:hasOutput a rdfs:Property .
+ex:hasExample a rdfs:Property .
+
+ex:name a rdfs:Property .
+ex:description a rdfs:Property .
+ex:shortFlag a rdfs:Property .
+ex:longFlag a rdfs:Property .
+ex:defaultValue a rdfs:Property .
+ex:isOptional a rdfs:Property .
+ex:paramType a rdfs:Property .
+ex:exampleCommand a rdfs:Property .
+ex:exampleOutput a rdfs:Property .
+ex:exitCodes a rdfs:Property .
+
+# Git tool
+ex:Git a ex:CLI_Tool ;
+       ex:name "Git" ;
+       ex:description "Distributed version control system" ;
+       ex:hasCommand ex:GitCommitCommand .
+
+# 'git commit' command
+ex:GitCommitCommand a ex:CLI_Command ;
+       ex:name "commit" ;
+       ex:description "Record changes to the repository" ;
+       ex:hasParameter ex:GitCommitMessage ;
+       ex:hasOption ex:GitCommitAllOption ;
+       ex:hasOutput ex:GitCommitOutput ;
+       ex:hasExample ex:GitCommitExample .
+
+# Parameter (Positional Argument) for commit message
+ex:GitCommitMessage a ex:CLI_Parameter ;
+       ex:name "message" ;
+       ex:description "Commit message describing the change" ;
+       ex:paramType "String" ;
+       ex:isOptional "false" .
+
+# Option (Flag) for git commit
+ex:GitCommitAllOption a ex:CLI_Option ;
+       ex:shortFlag "-a" ;
+       ex:longFlag "--all" ;
+       ex:description "Automatically stage files that have been modified/deleted" ;
+       ex:isOptional "true" .
+
+# Output for 'git commit'
+ex:GitCommitOutput a ex:CLI_Output ;
+       ex:description "Outputs a short summary of the commit" ;
+       ex:exitCodes "0: success, 1: error" .
+
+# Example usage
+ex:GitCommitExample a ex:CLI_Example ;
+       ex:exampleCommand "git commit -a -m 'Fixed bug #42'" ;
+       ex:exampleOutput "Files changed: 2, Insertions: 10, Deletions: 2" .

@@ -21,3 +21,4 @@ WORKDIR /app
 
 RUN wget -O paris.jar https://github.com/dig-team/PARIS/releases/download/v0.3/paris_0_3.jar
 
+ADD paris_wrapper.sh .
