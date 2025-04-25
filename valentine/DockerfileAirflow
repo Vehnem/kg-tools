@@ -1,9 +1,0 @@
-FROM python:3.11.2
-
-WORKDIR /app
-
-COPY valentine/valentine_example.py .
-
-RUN pip3 install valentine
-
-
