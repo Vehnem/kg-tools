@@ -62,12 +62,13 @@ def main():
     results = []
     for ((_, left), (_, right)), measure in one_to_one_matches.items():
         results.append({
-            "left": left,
-            "right": right,
-            "score": float(measure)
+            "id_1": left,
+            "id_2": right,
+            "score": float(measure),
+            "id_type": type(left).__name__
         })
 
-    output_data = {"format": "MatchingJSON", "results": results}
+    output_data = {"matches": results, "blocks": [], "clusters": []}
 
     # Save matches to output file
     with open(output_file, "w", encoding="utf-8") as f:

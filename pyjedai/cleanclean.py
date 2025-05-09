@@ -44,15 +44,18 @@ def main():
     # Clustering
     #clusters = unique_mapping_clustering.cluster(pairs_graph, data)
 
-    json_output = []
+    results = []
 
     for node1, node2, data_dict in pairs_graph.edges(data=True):
         entry = {
-            "entity1": node1,
-            "entity2": node2,
-            "score": float(data_dict.get('weight', 1.0))
+            "id_1": node1,
+            "id_2": node2,
+            "score": float(data_dict.get('weight', 1.0)),
+            "id_type": type(node1).__name__
         }
-        json_output.append(entry)
+        results.append(entry)
+
+    json_output = {"matches": results, "blocks": [], "clusters": []}
 
     with open(args.output, 'w', encoding='utf-8') as json_file:
         json.dump(json_output, json_file, ensure_ascii=False, indent=4)
