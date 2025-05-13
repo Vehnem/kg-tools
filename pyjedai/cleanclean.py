@@ -23,6 +23,12 @@ def main():
 
     data = data_reading.read(args.file1, args.file2)
 
+    df1 = data.dataset_1
+    df2 = data.dataset_2
+    offset = len(df1)
+    id_col1 = data.id_column_name_1
+    id_col2 = data.id_column_name_2
+
     data_cleaning.clean(data)
 
     if not (args.attr1 and args.attr2):
@@ -41,17 +47,28 @@ def main():
     # Matching
     pairs_graph = entity_matching.match(candidate_pairs_blocks, data)
 
+    print(pairs_graph)
     # Clustering
     #clusters = unique_mapping_clustering.cluster(pairs_graph, data)
 
     results = []
 
     for node1, node2, data_dict in pairs_graph.edges(data=True):
+        if node1 < offset:
+            val1 = df1.iloc[node1][id_col1]
+        else:
+            val1 = df2.iloc[node1 - offset][id_col2]
+
+        if node2 < offset:
+            val2 = df1.iloc[node2][id_col1]
+        else:
+            val2 = df2.iloc[node2 - offset][id_col2]
+
         entry = {
-            "id_1": node1,
-            "id_2": node2,
+            "id_1": val1,
+            "id_2": val2,
             "score": float(data_dict.get('weight', 1.0)),
-            "id_type": type(node1).__name__
+            "id_type": "entity"
         }
         results.append(entry)
 
@@ -64,4 +81,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
