@@ -19,14 +19,6 @@ rm -r /root/.cache
 
 WORKDIR /app
 
-COPY paris/requirements.txt .
+RUN wget -O paris.jar https://github.com/dig-team/PARIS/releases/download/v0.3/paris_0_3.jar
 
-COPY paris/config.json .
-
-COPY _tool-wrapper/app.py .
-
-RUN pip3 install -r requirements.txt
-
-RUN wget https://github.com/dig-team/PARIS/releases/download/v0.3/paris_0_3.jar
-
-CMD [ "python", "-m" , "flask", "run", "--host=0.0.0.0"]
+ADD wrapper/paris.sh .

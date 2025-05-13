@@ -23,3 +23,9 @@ test:
 
 clean:
 	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)
+
+docker_build:
+	docker build -t kgt/paris .
+
+docker_help:
+	docker run --rm kgt/paris java -jar paris.jar

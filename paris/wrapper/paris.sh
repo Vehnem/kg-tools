@@ -11,7 +11,7 @@ echo "endIteration=20" > $CONF
 echo "factstore1=$IN1" >> $CONF
 echo "factstore2=$IN2" >> $CONF
 echo "resultTSV=$OUT" >> $CONF
-echo "home=$(pwd)" >> $CONF
+echo "home=$OUT" >> $CONF
 
 mkdir -p $OUT
 echo $OUT | java -jar *.jar settings.ini
