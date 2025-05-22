@@ -1,0 +1,34 @@
+#!/bin/bash
+
+cd ..
+
+if [ "$#" -gt 0 ]; then
+  targets=("$@")
+else
+  targets=()
+  for dir in */; do
+    dirname="${dir%/}"
+    first_char="${dirname:0:1}"
+    if [[ "$first_char" != "_" && "$first_char" != "." && -d "$dirname" ]]; then
+      targets+=("$dirname")
+    fi
+  done
+fi
+
+for dirname in "${targets[@]}"; do
+
+  if [[ -d "$dirname" ]]; then
+    echo -e "==> Build $dirname\n"
+
+    cd "$dirname"
+
+    if make docker_build; then
+      echo "✔ Successfully built: $dirname"
+    else
+      echo "✖ Failed to build: $dirname"
+    fi
+
+    echo -e "\n\n"
+    cd ..
+  fi
+done
