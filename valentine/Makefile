@@ -20,3 +20,6 @@ test:
 clean:
 	rm -rf $(INSTALL_DIR) $(VENV_DIR)
 
+docker_build:
+	docker build -t kgt/valentine .
+
