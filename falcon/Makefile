@@ -2,7 +2,7 @@ INSTALL_DIR := $(CURDIR)/bin
 ES_HOST := http://localhost:9200
 VENV_DIR := .venv
 
-.PHONY: all install update elasticsearch test clean
+.PHONY: all install update elasticsearch test clean docker_build docker_falconinit docker_falconrun
 
 all: install update elasticsearch test
 install:
@@ -40,5 +40,21 @@ elasticsearch:
 
 test:
 	cd $(INSTALL_DIR)/falcon2.0/ && python3 main.py
+
 clean:
 	rm -rf $(INSTALL_DIR) $(VENV_DIR)
+
+docker_build:
+    cd compose && \
+    docker compose build
+
+docker_falconinit:
+    cd compose && \
+    docker compose run falconinit
+
+docker_falconrun:
+    cd compose && \
+    docker compose run falconcli
+
+docker_all: docker_build docker_falconinit docker_falconrun
+

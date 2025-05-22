@@ -1,9 +1,7 @@
 Example Request:
 
 ```bash
-curl --header "Content-Type: application/json" \
-  --request POST \
-  --data '{"text":"Who painted The Storm on the Sea of Galilee?"}' \
-  https://labs.tib.eu/falcon/falcon2/api?mode=long
+set +H
+curl -X POST http://localhost:5000/process -H "Content-Type: application/json" -d '{"text": "Who painted The Storm on the Sea of Galilee?"}'
 ```
 

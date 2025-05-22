@@ -16,7 +16,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 
 RUN git clone https://github.com/SDM-TIB/falcon2.0.git /app/falcon2.0
 WORKDIR /app/falcon2.0
-RUN pip install -r requirements.txt && python3 -m spacy download en_core_web_sm
+RUN pip install -r requirements.txt && pip install flask==2.0.3 Werkzeug==2.2.2 jinja2 && python3 -m spacy download en_core_web_sm
 
 # Elasticsearch Host setzen
 ENV ES_HOST=http://localhost:9200
@@ -41,5 +41,8 @@ RUN sed -i \
     -e '/^    #raise/d' \
     -e '/^    print("error")/d' \
     -e '/^    try:$/d' /app/falcon2.0/main.py
+
+COPY test.py .
+EXPOSE 5000
 
 WORKDIR /app

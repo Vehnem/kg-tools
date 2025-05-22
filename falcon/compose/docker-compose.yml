@@ -63,6 +63,9 @@ services:
       elasticsearch:
         condition: service_healthy
     working_dir: /app/falcon2.0
-    command: python3 main.py
     profiles:
       - debug
+    ports:
+      - "5000:5000"
+    command: python3 server.py
+
