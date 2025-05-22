@@ -45,16 +45,16 @@ clean:
 	rm -rf $(INSTALL_DIR) $(VENV_DIR)
 
 docker_build:
-    cd compose && \
-    docker compose build
+	cd compose && \
+	docker compose build
 
 docker_falconinit:
-    cd compose && \
-    docker compose run falconinit
+	cd compose && \
+	docker compose run falconinit
 
 docker_falconrun:
-    cd compose && \
-    docker compose run falconcli
+	cd compose && \
+	docker compose run falconcli
 
 docker_all: docker_build docker_falconinit docker_falconrun
 
