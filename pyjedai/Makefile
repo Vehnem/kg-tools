@@ -15,7 +15,10 @@ download:
 	rm $(INSTALL_DIR)/Abt-Buy.zip
 
 test_cleanclean:
-	$(VENV_DIR)/bin/python3 cleanclean.py
+	$(VENV_DIR)/bin/python3 wrapper/cleanclean.py
 
 clean:
 	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)
+
+docker_build:
+	docker build -t kgt/pyjedai .
