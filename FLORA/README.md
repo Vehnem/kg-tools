@@ -1,4 +1,4 @@
-# Paris Quickstart
+# FLORA Quickstart
 
 ## Requires
 Tested with Python 3.10
