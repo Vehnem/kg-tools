@@ -24,4 +24,14 @@ RUN unzip AML_v3.2.zip && rm AML_v3.2.zip
 
 WORKDIR /app/AML_v3.2
 
-ADD wrapper/agreementmaker.sh .
+COPY agreementmaker/requirements.txt /app/AML_v3.2
+
+COPY agreementmaker/config.json /app/AML_v3.2
+
+COPY agreementmaker/example /app/AML_v3.2
+
+COPY _tool-wrapper/app.py /app/AML_v3.2
+
+RUN pip3 install -r requirements.txt
+
+CMD [ "python", "-m" , "flask", "run", "--host=0.0.0.0"]

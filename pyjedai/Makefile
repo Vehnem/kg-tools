@@ -22,3 +22,10 @@ clean:
 
 docker_build:
 	docker build -t kgt/pyjedai .
+
+docker_help:
+	echo "Example usage of PyJedAI Docker"
+	echo "=== Usage 1 ==="
+	echo "docker run --rm kgt/pyjedai bash pyjedai.sh $input_path1 $input_path2 $output_file"
+	echo "=== Usage 2 ==="
+	echo "docker run --rm kgt/pyjedai python cleanclean.py --file1 $input_path1 --file2 $input_path2 --output $output_file"

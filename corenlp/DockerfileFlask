@@ -17,10 +17,24 @@ if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
 if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
 rm -r /root/.cache
 
-WORKDIR /app
 
-RUN wget https://github.com/AgreementMakerLight/AML-Project/releases/download/v3.2/AML_v3.2.zip
-RUN unzip AML_v3.2.zip && rm AML_v3.2.zip
+# Download und entpacken des Stanford CoreNLP
+WORKDIR /opt
 
-WORKDIR /app/AML_v3.2
+RUN wget https://nlp.stanford.edu/software/stanford-corenlp-4.5.8.zip
+RUN unzip stanford-corenlp-4.5.8.zip && rm stanford-corenlp-4.5.8.zip
 
+WORKDIR /opt/stanford-corenlp-4.5.8
+
+# Kopiere die Flask-App
+COPY stanford-openie/requirements.txt /opt/stanford-corenlp-4.5.8/
+
+COPY stanford-openie/config.json /opt/stanford-corenlp-4.5.8/
+
+COPY _tool-wrapper/app.py /opt/stanford-corenlp-4.5.8/
+
+RUN pip3 install -r requirements.txt
+
+# Flask starten
+
+CMD [ "python", "-m" , "flask", "run", "--host=0.0.0.0"]

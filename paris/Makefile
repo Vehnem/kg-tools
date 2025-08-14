@@ -28,4 +28,8 @@ docker_build:
 	docker build -t kgt/paris .
 
 docker_help:
-	docker run --rm kgt/paris java -jar paris.jar
+	echo "Example usage of Paris Docker"
+	echo "=== Usage 1 ==="
+	echo "docker run --rm kgt/paris bash paris.sh $input_path1 $input_path2 $output_path"
+	echo "=== Usage 2 ==="
+	echo "docker run --rm kgt/paris java -jar paris.jar $input_path1 $input_path2 $output_path"

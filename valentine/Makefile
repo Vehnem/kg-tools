@@ -23,3 +23,10 @@ clean:
 docker_build:
 	docker build -t kgt/valentine .
 
+docker_help:
+	echo "Example usage of Valentine Docker"
+	echo "=== Usage 1 ==="
+	echo "docker run --rm kgt/valentine bash valentine.sh $input_path1 $input_path2 $output_file"
+	echo "=== Usage 2 ==="
+	echo "docker run --rm kgt/valentine python valentine_example.py $input_path1 $input_path2 $output_file"
+
