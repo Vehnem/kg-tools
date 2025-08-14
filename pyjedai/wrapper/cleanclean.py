@@ -38,10 +38,13 @@ def main():
         attributes2 = [attr.strip() for attr in args.attr2.split(',')]
 
     blocks = token_blocking.block(data, attributes1, attributes2)
-    cleaned_blocks = block_purging.purge(blocks, data)
-    filtered_blocks = block_cleaning.clean(cleaned_blocks, data)
-    candidate_pairs_blocks = weighted_edge_pruning.clean(filtered_blocks, data)
 
+    #cleaned_blocks = block_purging.purge(blocks, data)
+    cleaned_blocks = blocks
+
+    filtered_blocks = block_cleaning.clean(cleaned_blocks, data)
+
+    candidate_pairs_blocks = weighted_edge_pruning.clean(filtered_blocks, data)
 
     # Matching
     pairs_graph = entity_matching.match(candidate_pairs_blocks, data)
