@@ -17,7 +17,7 @@ clean:
 	rm -rf $(INSTALL_DIR)
 
 docker_build:
-	docker build -t kgt:corenlp
+	docker build -t kgt/corenlp .
 
 docker_test:
 	#docker run --rm

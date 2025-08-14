@@ -20,11 +20,13 @@ docker_build:
 	docker build -t kgt/corenlp .
 
 docker_help:
-	echo "Example usage of CoreNLP Docker"
-	echo "=== Usage 1 ==="
-	echo "docker run --rm kgt/corenlp bash corenlp.sh $input_path $output_file"
-	echo "=== Usage 2 ==="
-	echo "docker run --rm kgt/corenlp java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP --annotators tokenize,ssplit,pos,lemma,depparse,natlog,openie --file $input_path --output $output_file"
+	echo "Example usage of CoreNLP Docker"; \
+	echo "=== Usage 1 ==="; \
+	echo "docker run --rm kgt/corenlp bash corenlp.sh $$input_path $$output_file"; \
+	echo "=== Usage 2 ==="; \
+	echo "docker run --rm kgt/corenlp bash kbp.sh $$input_path $$output_file"; \
+	echo "=== Usage 3 ==="; \
+	echo "docker run --rm kgt/corenlp bash openie.sh $$input_path $$output_file";
 
 
 docker_test:
