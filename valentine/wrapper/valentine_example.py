@@ -65,7 +65,7 @@ def main():
             "id_1": left,
             "id_2": right,
             "score": float(measure),
-            "id_type": type(left).__name__
+            "id_type": "relation"
         })
 
     output_data = {"matches": results, "blocks": [], "clusters": []}
