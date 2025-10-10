@@ -86,6 +86,6 @@ We categorize each tool based on its functionality. Tools with the `_` suffix ar
 
 Contributions are welcome! Please read our [contribution guidelines](CONTRIBUTING.md) for more details.
 
-## License
+## License TODO
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
