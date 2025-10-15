@@ -1,0 +1,19 @@
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  image: docker:24.0.5
+  script:
+    - cd _scripts
+    - bash build
+  artifacts:
+    expire_in: 1 week
+
+test:
+  stage: test
+  image: docker:24.0.5
+  script:
+    - cd _scripts
+    - bash test
