@@ -19,6 +19,16 @@ clean:
 docker_build:
 	docker build -t kgt/corenlp .
 
+docker_help:
+	echo "Example usage of CoreNLP Docker"; \
+	echo "=== Usage 1 ==="; \
+	echo "docker run --rm kgt/corenlp bash corenlp.sh $$input_path $$output_file"; \
+	echo "=== Usage 2 ==="; \
+	echo "docker run --rm kgt/corenlp bash kbp.sh $$input_path $$output_file"; \
+	echo "=== Usage 3 ==="; \
+	echo "docker run --rm kgt/corenlp bash openie.sh $$input_path $$output_file";
+
+
 docker_test:
 	#docker run --rm
 	#docker run --rm -v /data:/data kgtool/corenlp java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,pos,lemma,ner,parse,coref,kbp -file /data/results/foundation-eval/sources/text/Angela_Merkel.txt  -outputFormat json

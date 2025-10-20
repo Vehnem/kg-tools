@@ -1,0 +1,4 @@
+ {
+  "command": ["java", "-mx1g", "-cp", "*", "edu.stanford.nlp.naturalli.OpenIE"]
+}
+

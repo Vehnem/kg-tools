@@ -17,6 +17,7 @@ fi
 /RDFUnit/bin/rdfunit \
   -d "$KG_FILE" \
   -s "$ONTOLOGY_FILE" \
-  -r aggregate
+  -r aggregate \
+  -o json-ld
 
 cp -r ./data/results/. "$OUTPUT_DIR"

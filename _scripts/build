@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ..
+# cd ..
 
 if [ "$#" -gt 0 ]; then
   targets=("$@")

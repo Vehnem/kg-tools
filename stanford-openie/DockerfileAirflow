@@ -26,3 +26,6 @@ RUN unzip stanford-corenlp-4.5.8.zip && rm stanford-corenlp-4.5.8.zip
 
 WORKDIR /opt/stanford-corenlp-4.5.8
 
+COPY wrapper/ .
+
+

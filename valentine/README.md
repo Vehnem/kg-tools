@@ -1,5 +1,5 @@
 Build Dockerfile
 
 ```
-docker build -f valentine/Dockerfile -t kgtool/valentine .
+make docker_build
 ```
