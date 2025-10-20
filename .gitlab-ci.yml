@@ -1,162 +1,6 @@
 stages:
   - build_and_test
 
-agreementmaker:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building agreementmaker"
-    - bash build "agreementmaker"
-    - echo "🧪 Testing agreementmaker"
-    - bash test "agreementmaker"
-  artifacts:
-    expire_in: 1 week
-
-dbpedia-spotlight:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building dbpedia-spotlight"
-    - bash build "dbpedia-spotlight"
-    - echo "🧪 Testing dbpedia-spotlight"
-    - bash test "dbpedia-spotlight"
-  artifacts:
-    expire_in: 1 week
-
-dedup:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building dedup"
-    - bash build "dedup"
-    - echo "🧪 Testing dedup"
-    - bash test "dedup"
-  artifacts:
-    expire_in: 1 week
-
-deepmatcher:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building deepmatcher"
-    - bash build "deepmatcher"
-    - echo "🧪 Testing deepmatcher"
-    - bash test "deepmatcher"
-  artifacts:
-    expire_in: 1 week
-
-falcon:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building falcon"
-    - bash build "falcon"
-    - echo "🧪 Testing falcon"
-    - bash test "falcon"
-  artifacts:
-    expire_in: 1 week
-
-FLORA:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building FLORA"
-    - bash build "FLORA"
-    - echo "🧪 Testing FLORA"
-    - bash test "FLORA"
-  artifacts:
-    expire_in: 1 week
-
-jedai:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building jedai"
-    - bash build "jedai"
-    - echo "🧪 Testing jedai"
-    - bash test "jedai"
-  artifacts:
-    expire_in: 1 week
-
-Karma-Linux:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building Karma-Linux"
-    - bash build "Karma-Linux"
-    - echo "🧪 Testing Karma-Linux"
-    - bash test "Karma-Linux"
-  artifacts:
-    expire_in: 1 week
-
-limes:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building limes"
-    - bash build "limes"
-    - echo "🧪 Testing limes"
-    - bash test "limes"
-  artifacts:
-    expire_in: 1 week
-
-LIMES:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building LIMES"
-    - bash build "LIMES"
-    - echo "🧪 Testing LIMES"
-    - bash test "LIMES"
-  artifacts:
-    expire_in: 1 week
-
-magellan:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building magellan"
-    - bash build "magellan"
-    - echo "🧪 Testing magellan"
-    - bash test "magellan"
-  artifacts:
-    expire_in: 1 week
-
-OntoAligner:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building OntoAligner"
-    - bash build "OntoAligner"
-    - echo "🧪 Testing OntoAligner"
-    - bash test "OntoAligner"
-  artifacts:
-    expire_in: 1 week
-
 paris:
   stage: build_and_test
   image: docker:24.0.5
@@ -170,16 +14,16 @@ paris:
   artifacts:
     expire_in: 1 week
 
-pellet:
+valentine:
   stage: build_and_test
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
     - cd _scripts
-    - echo "🔨 Building pellet"
-    - bash build "pellet"
-    - echo "🧪 Testing pellet"
-    - bash test "pellet"
+    - echo "🔨 Building valentine"
+    - bash build "valentine"
+    - echo "🧪 Testing valentine"
+    - bash test "valentine"
   artifacts:
     expire_in: 1 week
 
@@ -196,107 +40,16 @@ pyjedai:
   artifacts:
     expire_in: 1 week
 
-rdfunit:
+corenlp:
   stage: build_and_test
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
     - cd _scripts
-    - echo "🔨 Building rdfunit"
-    - bash build "rdfunit"
-    - echo "🧪 Testing rdfunit"
-    - bash test "rdfunit"
-  artifacts:
-    expire_in: 1 week
-
-rebel:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building rebel"
-    - bash build "rebel"
-    - echo "🧪 Testing rebel"
-    - bash test "rebel"
-  artifacts:
-    expire_in: 1 week
-
-rel:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building rel"
-    - bash build "rel"
-    - echo "🧪 Testing rel"
-    - bash test "rel"
-  artifacts:
-    expire_in: 1 week
-
-rmlmapper:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building rmlmapper"
-    - bash build "rmlmapper"
-    - echo "🧪 Testing rmlmapper"
-    - bash test "rmlmapper"
-  artifacts:
-    expire_in: 1 week
-
-stanford-openie:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building stanford-openie"
-    - bash build "stanford-openie"
-    - echo "🧪 Testing stanford-openie"
-    - bash test "stanford-openie"
-  artifacts:
-    expire_in: 1 week
-
-template:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building template"
-    - bash build "template"
-    - echo "🧪 Testing template"
-    - bash test "template"
-  artifacts:
-    expire_in: 1 week
-
-test:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building test"
-    - bash build "test"
-    - echo "🧪 Testing test"
-    - bash test "test"
-  artifacts:
-    expire_in: 1 week
-
-valentine:
-  stage: build_and_test
-  image: docker:24.0.5
-  script:
-    - apk add --no-cache bash make
-    - cd _scripts
-    - echo "🔨 Building valentine"
-    - bash build "valentine"
-    - echo "🧪 Testing valentine"
-    - bash test "valentine"
+    - echo "🔨 Building corenlp"
+    - bash build "corenlp"
+    - echo "🧪 Testing corenlp"
+    - bash test "corenlp"
   artifacts:
     expire_in: 1 week
 

@@ -10,14 +10,16 @@ echo "stages:" > "$OUTPUT"
 echo "  - build_and_test" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 
-tools=()
-for dir in */; do
-  dirname="${dir%/}"
-  first_char="${dirname:0:1}"
-  if [[ "$first_char" != "_" && "$first_char" != "." && -d "$dirname" ]]; then
-    tools+=("$dirname")
-  fi
-done
+#tools=()
+#for dir in */; do
+#  dirname="${dir%/}"
+#  first_char="${dirname:0:1}"
+#  if [[ "$first_char" != "_" && "$first_char" != "." && -d "$dirname" ]]; then
+#    tools+=("$dirname")
+#  fi
+#done
+
+tools=("paris" "valentine" "pyjedai" "corenlp")
 
 for tool in "${tools[@]}"; do
 cat >> "$OUTPUT" <<EOF
