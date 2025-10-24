@@ -11,6 +11,9 @@ paris:
     - bash build "paris"
     - echo "🧪 Testing paris"
     - bash test "paris"
+    - echo "Pushing to registry"
+    - docker tag kgt/paris 127.0.0.1:5000/kgt/paris
+    - docker push 127.0.0.1:5000/kgt/paris
   rules:
     - changes:
         - paris/**/*
@@ -26,6 +29,9 @@ valentine:
     - bash build "valentine"
     - echo "🧪 Testing valentine"
     - bash test "valentine"
+    - echo "Pushing to registry"
+    - docker tag kgt/valentine 127.0.0.1:5000/kgt/valentine
+    - docker push 127.0.0.1:5000/kgt/valentine
   rules:
     - changes:
         - valentine/**/*
@@ -41,6 +47,9 @@ pyjedai:
     - bash build "pyjedai"
     - echo "🧪 Testing pyjedai"
     - bash test "pyjedai"
+    - echo "Pushing to registry"
+    - docker tag kgt/pyjedai 127.0.0.1:5000/kgt/pyjedai
+    - docker push 127.0.0.1:5000/kgt/pyjedai
   rules:
     - changes:
         - pyjedai/**/*
@@ -56,6 +65,9 @@ corenlp:
     - bash build "corenlp"
     - echo "🧪 Testing corenlp"
     - bash test "corenlp"
+    - echo "Pushing to registry"
+    - docker tag kgt/corenlp 127.0.0.1:5000/kgt/corenlp
+    - docker push 127.0.0.1:5000/kgt/corenlp
   rules:
     - changes:
         - corenlp/**/*

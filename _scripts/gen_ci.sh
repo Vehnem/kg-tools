@@ -33,6 +33,9 @@ $tool:
     - bash build "$tool"
     - echo "🧪 Testing $tool"
     - bash test "$tool"
+    - echo "Pushing to registry"
+    - docker tag kgt/$tool 127.0.0.1:5000/kgt/$tool
+    - docker push 127.0.0.1:5000/kgt/$tool
   rules:
     - changes:
         - $tool/**/*
