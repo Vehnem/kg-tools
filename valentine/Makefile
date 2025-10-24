@@ -23,6 +23,9 @@ clean:
 docker_build:
 	docker build -t kgt/valentine .
 
+docker_test:
+	echo "Not implemented yet"
+
 docker_help:
 	echo "Example usage of Valentine Docker"
 	echo "=== Usage 1 ==="

@@ -26,6 +26,7 @@ for dirname in "${targets[@]}"; do
       echo "✔ Successfully built: $dirname"
     else
       echo "✖ Failed to build: $dirname"
+      exit 1
     fi
 
     echo -e "\n\n"

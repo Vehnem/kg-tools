@@ -27,6 +27,9 @@ clean:
 docker_build:
 	docker build -t kgt/paris .
 
+docker_test:
+	echo "Not implemented yet"
+
 docker_help:
 	echo "Example usage of Paris Docker"
 	echo "=== Usage 1 ==="

@@ -26,6 +26,7 @@ for dirname in "${targets[@]}"; do
       echo "✔ Successfully tested: $dirname"
     else
       echo "✖ Failed to test: $dirname"
+      exit 1
     fi
 
     echo -e "\n\n"

@@ -23,6 +23,9 @@ clean:
 docker_build:
 	docker build -t kgt/pyjedai .
 
+docker_test:
+	echo "Not implemented yet"
+
 docker_help:
 	echo "Example usage of PyJedAI Docker"
 	echo "=== Usage 1 ==="

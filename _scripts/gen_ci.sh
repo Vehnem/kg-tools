@@ -33,8 +33,10 @@ $tool:
     - bash build "$tool"
     - echo "🧪 Testing $tool"
     - bash test "$tool"
-  artifacts:
-    expire_in: 1 week
+  rules:
+    - changes:
+        - $tool/**/*
+        - _scripts/**/*
 
 EOF
 done
