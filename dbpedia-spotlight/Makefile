@@ -6,4 +6,5 @@
 
 docker_build: .cloned
 	cp spotlight.sh bin/
+	cp dockerfile bin/
 	@cd bin && docker build -t kgt/spotlight .
