@@ -4,6 +4,9 @@ INSTALL_DIR := $(CURDIR)/bin
 
 all: download test
 
+TESTDATA_URL = https://github.com/Vehnem/kg-testdata.git
+CLEANUP := true
+
 download:
 	@wget -P $(INSTALL_DIR) https://nlp.stanford.edu/software/stanford-corenlp-4.5.8.zip
 	@unzip $(INSTALL_DIR)/stanford-corenlp-4.5.8.zip -d $(INSTALL_DIR)
@@ -30,7 +33,32 @@ docker_help:
 
 
 docker_test:
-	#docker run --rm
-	#docker run --rm -v /data:/data kgt/corenlp java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,pos,lemma,ner,parse,coref,kbp -file /data/results/foundation-eval/sources/text/Angela_Merkel.txt  -outputFormat json
-	echo "Skip for now"
-	#docker run --rm -v /data:/data kgt/corenlp java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP -annotators tokenize,ssplit,pos,lemma,depparse,natlog,openie -file /data/results/foundation-eval/sources/text/Angela_Merkel.txt  -outputFormat json
+ifeq ($(KG_TESTDATA_PATH),)
+	@echo "KG_TESTDATA_PATH not set. Clone Repository $(TESTDATA_URL)..."
+	@if [ ! -d "kg-testdata" ]; then git clone $(TESTDATA_URL); fi
+	$(eval DATA_PATH:=$(shell realpath ./kg-testdata))
+	$(eval CLEANUP := true)
+else
+	echo "Use KG-Testdata Repository at: $(KG_TESTDATA_PATH)"
+	$(eval DATA_PATH := $(KG_TESTDATA_PATH))
+endif
+	@if [ ! -f "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt" ]; then \
+			@echo "File not found: $(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt"; \
+			@exit 1; \
+	fi
+	@docker run --rm \
+		-v "$(DATA_PATH)/_snippets/corenlp":/data \
+		kgt/corenlp \
+		java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP \
+		-annotators tokenize,ssplit,pos,lemma,depparse,natlog,openie \
+		-file /data/Angela_Merkel.txt \
+		-outputFormat json \
+		-outputDirectory /data
+	@if [ ! -f "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt.json" ]; then \
+			@echo "Error: No output file produced."; \
+			@exit 1; \
+	fi;
+ifeq ($(CLEANUP),true)
+	@echo "Remove temp directory..."
+	@rm -rf "$(DATA_PATH)"
+endif

@@ -32,8 +32,15 @@ git clone https://github.com/vehnem/kg-tools.git
 cd kg-tools
 ```
 
-## Usage
+## Tool Usage Overview
 
+Each tool directory includes a Makefile providing at least these three commands: docker_build, docker_test, and docker_help.
+After building the tool with docker_build, you can explore usage instructions via docker_help or verify functionality using docker_test.
+
+The [.gitlab-ci.yml](.gitlab-ci.yml) builds all added tools with docker_build and tests them with docker_test as defined in each Makefile.
+
+
+## Usage
 We use Python and Docker to wrap each tool as a web service, enabling remote access to their capabilities from other projects.
 
 ```bash
@@ -85,6 +92,18 @@ We categorize each tool based on its functionality. Tools with the `_` suffix ar
 ## Contributing
 
 Contributions are welcome! Please read our [contribution guidelines](CONTRIBUTING.md) for more details.
+
+## Adding New Tools
+
+To add a new tool, create a folder named after the tool at the repository’s top level.
+Inside this folder, include at least a Makefile defining at least the targets docker_build, docker_help and docker_test.
+
+To store/use testdata use the [kg-testdata](https://github.com/Vehnem/kg-testdata) repository.
+
+If you want to update the .gitlab-ci.yml configuration accordingly, run the script:
+```bash
+bash _scripts/gen_ci.sh
+```
 
 ## License TODO
 
