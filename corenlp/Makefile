@@ -5,6 +5,7 @@ INSTALL_DIR := $(CURDIR)/bin
 all: download test
 
 TESTDATA_URL = https://github.com/Vehnem/kg-testdata.git
+TEMP_DIR := $(shell mktemp -d)
 CLEANUP := true
 
 download:
@@ -35,8 +36,8 @@ docker_help:
 docker_test:
 ifeq ($(KG_TESTDATA_PATH),)
 	@echo "KG_TESTDATA_PATH not set. Clone Repository $(TESTDATA_URL)..."
-	@if [ ! -d "kg-testdata" ]; then git clone $(TESTDATA_URL); fi
-	$(eval DATA_PATH:=$(shell realpath ./kg-testdata))
+	@if [ ! -d $(TEMP_DIR)/_snippets ]; then git clone $(TESTDATA_URL) $(TEMP_DIR); fi
+	$(eval DATA_PATH:=$(TEMP_DIR))
 	$(eval CLEANUP := true)
 else
 	echo "Use KG-Testdata Repository at: $(KG_TESTDATA_PATH)"
