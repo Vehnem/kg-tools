@@ -5,7 +5,7 @@ INSTALL_DIR := $(CURDIR)/bin
 all: download test
 
 TESTDATA_URL = https://github.com/Vehnem/kg-testdata.git
-CLEANUP := false
+CLEANUP := true
 
 download:
 	@wget -P $(INSTALL_DIR) https://nlp.stanford.edu/software/stanford-corenlp-4.5.8.zip
