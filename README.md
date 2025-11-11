@@ -100,6 +100,8 @@ Inside this folder, include at least a Makefile defining at least the targets do
 
 To store/use testdata use the [kg-testdata](https://github.com/Vehnem/kg-testdata) repository.
 
+If the tool requires additional packages in GitLab CI, create a .packages file in its folder listing the packages to be installed via apk add.
+
 If you want to update the .gitlab-ci.yml configuration accordingly, run the script:
 ```bash
 bash _scripts/gen_ci.sh

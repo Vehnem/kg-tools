@@ -22,12 +22,18 @@ echo "" >> "$OUTPUT"
 tools=("paris" "valentine" "pyjedai" "corenlp")
 
 for tool in "${tools[@]}"; do
+pkgs="bash make"
+pkg_file="$tool/.packages"
+  if [[ -f "$pkg_file" ]]; then
+      extra=$(<"$pkg_file")
+      pkgs="$pkgs $extra"
+  fi
 cat >> "$OUTPUT" <<EOF
 $tool:
   stage: build_and_test
   image: docker:24.0.5
   script:
-    - apk add --no-cache bash make
+    - apk add --no-cache $pkgs
     - cd _scripts
     - echo "🔨 Building $tool"
     - bash build "$tool"
