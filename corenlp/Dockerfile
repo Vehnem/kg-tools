@@ -1,7 +1,8 @@
 FROM adoptopenjdk/openjdk8:jre
 
-RUN apt update
-RUN apt install -y zip
+RUN apt-get update &&  \
+    apt-get install -y --no-install-recommends git zip && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt
 

@@ -5,7 +5,7 @@ INSTALL_DIR := $(CURDIR)/bin
 all: download test
 
 TESTDATA_URL = https://github.com/Vehnem/kg-testdata.git
-CLEANUP := true
+CLEANUP := false
 
 download:
 	@wget -P $(INSTALL_DIR) https://nlp.stanford.edu/software/stanford-corenlp-4.5.8.zip
@@ -43,20 +43,20 @@ else
 	$(eval DATA_PATH := $(KG_TESTDATA_PATH))
 endif
 	@if [ ! -f "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt" ]; then \
-			@echo "File not found: $(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt"; \
-			@exit 1; \
+			echo "File not found: $(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt"; \
+			exit 1; \
 	fi
 	@docker run --rm \
 		-v "$(DATA_PATH)/_snippets/corenlp":/data \
 		kgt/corenlp \
-		java -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLP \
-		-annotators tokenize,ssplit,pos,lemma,depparse,natlog,openie \
-		-file /data/Angela_Merkel.txt \
-		-outputFormat json \
-		-outputDirectory /data
+		bash openie.sh /data/Angela_Merkel.txt /data
 	@if [ ! -f "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt.json" ]; then \
-			@echo "Error: No output file produced."; \
-			@exit 1; \
+			echo "Error: No output file produced."; \
+			exit 1; \
+	fi;
+	@if [ ! -s "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt.json" ]; then \
+			echo "Error: Output file is empty."; \
+			exit 1; \
 	fi;
 ifeq ($(CLEANUP),true)
 	@echo "Remove temp directory..."
