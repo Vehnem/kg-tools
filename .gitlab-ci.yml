@@ -6,11 +6,10 @@ paris:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - cd _scripts
     - echo "🔨 Building paris"
-    - bash build "paris"
+    - bash _scripts/build "paris"
     - echo "🧪 Testing paris"
-    - bash test "paris"
+    - bash _scripts/test "paris"
     - echo "Pushing to registry"
     - docker tag kgt/paris 127.0.0.1:5000/kgt/paris
     - docker push 127.0.0.1:5000/kgt/paris
@@ -24,11 +23,10 @@ valentine:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - cd _scripts
     - echo "🔨 Building valentine"
-    - bash build "valentine"
+    - bash _scripts/build "valentine"
     - echo "🧪 Testing valentine"
-    - bash test "valentine"
+    - bash _scripts/test "valentine"
     - echo "Pushing to registry"
     - docker tag kgt/valentine 127.0.0.1:5000/kgt/valentine
     - docker push 127.0.0.1:5000/kgt/valentine
@@ -42,11 +40,10 @@ pyjedai:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - cd _scripts
     - echo "🔨 Building pyjedai"
-    - bash build "pyjedai"
+    - bash _scripts/build "pyjedai"
     - echo "🧪 Testing pyjedai"
-    - bash test "pyjedai"
+    - bash _scripts/test "pyjedai"
     - echo "Pushing to registry"
     - docker tag kgt/pyjedai 127.0.0.1:5000/kgt/pyjedai
     - docker push 127.0.0.1:5000/kgt/pyjedai
@@ -60,11 +57,10 @@ corenlp:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - cd _scripts
     - echo "🔨 Building corenlp"
-    - bash build "corenlp"
+    - bash _scripts/build "corenlp"
     - echo "🧪 Testing corenlp"
-    - bash test "corenlp"
+    - bash _scripts/test "corenlp"
     - echo "Pushing to registry"
     - docker tag kgt/corenlp 127.0.0.1:5000/kgt/corenlp
     - docker push 127.0.0.1:5000/kgt/corenlp

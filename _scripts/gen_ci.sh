@@ -34,11 +34,10 @@ $tool:
   image: docker:24.0.5
   script:
     - apk add --no-cache $pkgs
-    - cd _scripts
     - echo "🔨 Building $tool"
-    - bash build "$tool"
+    - bash _scripts/build "$tool"
     - echo "🧪 Testing $tool"
-    - bash test "$tool"
+    - bash _scripts/test "$tool"
     - echo "Pushing to registry"
     - docker tag kgt/$tool 127.0.0.1:5000/kgt/$tool
     - docker push 127.0.0.1:5000/kgt/$tool
