@@ -59,7 +59,7 @@ corenlp:
   stage: build_and_test
   image: docker:24.0.5
   script:
-    - apk add --no-cache bash make git
+    - apk add --no-cache bash make
     - cd _scripts
     - echo "🔨 Building corenlp"
     - bash build "corenlp"

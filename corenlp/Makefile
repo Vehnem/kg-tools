@@ -5,8 +5,6 @@ INSTALL_DIR := $(CURDIR)/bin
 all: download test
 
 TESTDATA_URL = https://github.com/Vehnem/kg-testdata.git
-TEMP_DIR := $(shell mktemp -d)
-CLEANUP := true
 
 download:
 	@wget -P $(INSTALL_DIR) https://nlp.stanford.edu/software/stanford-corenlp-4.5.8.zip
@@ -34,32 +32,20 @@ docker_help:
 
 
 docker_test:
-ifeq ($(KG_TESTDATA_PATH),)
-	@echo "KG_TESTDATA_PATH not set. Clone Repository $(TESTDATA_URL)..."
-	@if [ ! -d $(TEMP_DIR)/_snippets ]; then git clone $(TESTDATA_URL) $(TEMP_DIR); fi
-	$(eval DATA_PATH:=$(TEMP_DIR))
-	$(eval CLEANUP := true)
-else
-	echo "Use KG-Testdata Repository at: $(KG_TESTDATA_PATH)"
-	$(eval DATA_PATH := $(KG_TESTDATA_PATH))
-endif
-	@if [ ! -f "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt" ]; then \
-			echo "File not found: $(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt"; \
+	@echo "▶ Running CoreNLP test (clone testdata inside container)..."
+	@docker run --rm kgt/corenlp bash -c "\
+		set -e; \
+		git clone $(TESTDATA_URL) /data; \
+		if [ ! -f /data/_snippets/corenlp/Angela_Merkel.txt ]; then \
+			echo 'File not found: /data/_snippets/corenlp/Angela_Merkel.txt'; \
 			exit 1; \
-	fi
-	@docker run --rm \
-		-v "$(DATA_PATH)/_snippets/corenlp":/data \
-		kgt/corenlp \
-		bash openie.sh /data/Angela_Merkel.txt /data
-	@if [ ! -f "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt.json" ]; then \
-			echo "Error: No output file produced."; \
+		fi; \
+		bash openie.sh /data/_snippets/corenlp/Angela_Merkel.txt /data; \
+		if [ ! -f /data/Angela_Merkel.txt.json ]; then \
+			echo 'Error: No output file produced.'; \
 			exit 1; \
-	fi;
-	@if [ ! -s "$(DATA_PATH)/_snippets/corenlp/Angela_Merkel.txt.json" ]; then \
-			echo "Error: Output file is empty."; \
+		fi; \
+		if [ ! -s /data/Angela_Merkel.txt.json ]; then \
+			echo 'Error: Output file is empty.'; \
 			exit 1; \
-	fi;
-ifeq ($(CLEANUP),true)
-	@echo "Remove temp directory..."
-	@rm -rf "$(DATA_PATH)"
-endif
+		fi;"
