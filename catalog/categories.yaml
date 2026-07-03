@@ -1,0 +1,40 @@
+# Knowledge graph lifecycle taxonomy for kg-tools catalog entries.
+# Aligned with common KG integration task categories.
+
+categories:
+  StructureTransformation:
+    description: Mapping, conversion, and structural data transformation
+  InformationExtraction:
+    description: Entity, relation, and triple extraction from text
+  EntityResolution:
+    description: Matching, blocking, clustering, and deduplication
+  SchemaAlignment:
+    description: Schema matching and ontology alignment
+  EntityLinking:
+    description: Linking extracted mentions to knowledge graph entities
+  ReasoningValidation:
+    description: Reasoning, consistency checking, and validation
+  Visualization:
+    description: Exploration and visualization of knowledge graphs
+  DatasetUtility:
+    description: Helper scripts and dataset utilities
+
+kinds:
+  docker_cli:
+    description: Command-line tool packaged as a Docker image
+  docker_api:
+    description: HTTP API service running in Docker
+  http_service:
+    description: External HTTP service (not containerized in this repo)
+  python_package:
+    description: Python package or script usage
+  visualization:
+    description: Visualization assets or tools
+  dataset_utility:
+    description: Dataset manipulation utilities
+
+status_values:
+  - maintained
+  - experimental
+  - deprecated
+  - archived

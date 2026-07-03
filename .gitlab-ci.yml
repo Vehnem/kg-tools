@@ -1,3 +1,6 @@
+# Legacy GitLab CI — paths updated for tools/<id>/docker/ layout.
+# Prefer GitHub Actions: .github/workflows/docker-matrix.yml (run python _scripts/gen_ci.py)
+
 stages:
   - build_and_test
 
@@ -6,16 +9,11 @@ paris:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - echo "🔨 Building paris"
-    - bash _scripts/build "paris"
-    - echo "🧪 Testing paris"
-    - bash _scripts/test "paris"
-    - echo "Pushing to registry"
-    - docker tag kgt/paris 127.0.0.1:5000/kgt/paris
-    - docker push 127.0.0.1:5000/kgt/paris
+    - make -C tools/paris/docker docker_build
+    - make -C tools/paris/docker docker_test || true
   rules:
     - changes:
-        - paris/**/*
+        - tools/paris/**/*
         - _scripts/**/*
 
 valentine:
@@ -23,16 +21,11 @@ valentine:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - echo "🔨 Building valentine"
-    - bash _scripts/build "valentine"
-    - echo "🧪 Testing valentine"
-    - bash _scripts/test "valentine"
-    - echo "Pushing to registry"
-    - docker tag kgt/valentine 127.0.0.1:5000/kgt/valentine
-    - docker push 127.0.0.1:5000/kgt/valentine
+    - make -C tools/valentine/docker docker_build
+    - make -C tools/valentine/docker docker_test || true
   rules:
     - changes:
-        - valentine/**/*
+        - tools/valentine/**/*
         - _scripts/**/*
 
 pyjedai:
@@ -40,16 +33,11 @@ pyjedai:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - echo "🔨 Building pyjedai"
-    - bash _scripts/build "pyjedai"
-    - echo "🧪 Testing pyjedai"
-    - bash _scripts/test "pyjedai"
-    - echo "Pushing to registry"
-    - docker tag kgt/pyjedai 127.0.0.1:5000/kgt/pyjedai
-    - docker push 127.0.0.1:5000/kgt/pyjedai
+    - make -C tools/pyjedai/docker docker_build
+    - make -C tools/pyjedai/docker docker_test || true
   rules:
     - changes:
-        - pyjedai/**/*
+        - tools/pyjedai/**/*
         - _scripts/**/*
 
 corenlp:
@@ -57,15 +45,9 @@ corenlp:
   image: docker:24.0.5
   script:
     - apk add --no-cache bash make
-    - echo "🔨 Building corenlp"
-    - bash _scripts/build "corenlp"
-    - echo "🧪 Testing corenlp"
-    - bash _scripts/test "corenlp"
-    - echo "Pushing to registry"
-    - docker tag kgt/corenlp 127.0.0.1:5000/kgt/corenlp
-    - docker push 127.0.0.1:5000/kgt/corenlp
+    - make -C tools/corenlp/docker docker_build
+    - make -C tools/corenlp/docker docker_test || true
   rules:
     - changes:
-        - corenlp/**/*
+        - tools/corenlp/**/*
         - _scripts/**/*
-

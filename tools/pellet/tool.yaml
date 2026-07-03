@@ -1,0 +1,15 @@
+name: Pellet
+kind:
+- docker_cli
+categories:
+- ReasoningValidation
+status: maintained
+description: OWL DL reasoner for consistency checking.
+execution:
+  docker:
+    image: kgt/pellet
+    tag: latest
+ci:
+  docker_build: false
+  docker_test: false
+id: pellet

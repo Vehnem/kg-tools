@@ -1,0 +1,22 @@
+name: FALCON
+kind:
+- docker_api
+categories:
+- EntityLinking
+status: experimental
+description: Entity linking via FALCON 2.0.
+upstream:
+  url: https://github.com/SDM-TIB/falcon2.0
+  license: MIT
+execution:
+  docker:
+    image: kgt/falcon
+    tag: latest
+ci:
+  docker_build: true
+  docker_test: false
+kgpipe:
+  task_refs:
+  - falcon_ner_nel_rl
+  - falcon_exchange
+id: falcon

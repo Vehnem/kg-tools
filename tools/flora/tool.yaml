@@ -1,0 +1,17 @@
+name: FLORA
+kind:
+- docker_cli
+categories:
+- EntityResolution
+status: experimental
+execution:
+  docker:
+    image: kgt/flora
+    tag: latest
+    entrypoint:
+    - bash
+    - flora.sh
+ci:
+  docker_build: true
+  docker_test: false
+id: flora

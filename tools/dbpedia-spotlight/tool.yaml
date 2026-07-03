@@ -1,0 +1,22 @@
+name: DBpedia Spotlight
+kind:
+- docker_cli
+categories:
+- EntityLinking
+status: maintained
+description: Entity linking service for DBpedia.
+upstream:
+  url: https://github.com/dbpedia-spotlight/dbpedia-spotlight
+  license: Apache-2.0
+execution:
+  docker:
+    image: kgt/dbpedia-spotlight
+    tag: latest
+ci:
+  docker_build: true
+  docker_test: false
+kgpipe:
+  task_refs:
+  - dbpedia_spotlight_ner_nel
+  - dbpedia_spotlight_exchange
+id: dbpedia-spotlight

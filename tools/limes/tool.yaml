@@ -1,0 +1,17 @@
+name: LIMES
+kind:
+- visualization
+- docker_cli
+categories:
+- SchemaAlignment
+- Visualization
+status: experimental
+description: Link discovery and schema matching.
+execution:
+  docker:
+    image: kgt/limes
+    tag: latest
+ci:
+  docker_build: false
+  docker_test: false
+id: limes

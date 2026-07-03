@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vehnem/kg-tools/catalog/schema/tool.schema.json",
+  "title": "kg-tools tool manifest",
+  "type": "object",
+  "required": ["id", "name", "kind", "categories", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique tool identifier (directory name under tools/)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "docker_cli",
+          "docker_api",
+          "http_service",
+          "python_package",
+          "visualization",
+          "dataset_utility"
+        ]
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "StructureTransformation",
+          "InformationExtraction",
+          "EntityResolution",
+          "SchemaAlignment",
+          "EntityLinking",
+          "ReasoningValidation",
+          "Visualization",
+          "DatasetUtility"
+        ]
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["maintained", "experimental", "deprecated", "archived"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "license": { "type": "string" }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "docker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["image"],
+          "properties": {
+            "image": {
+              "type": "string",
+              "pattern": "^[a-z0-9/_-]+$",
+              "description": "Docker image name without tag, e.g. kgt/paris"
+            },
+            "tag": {
+              "type": "string",
+              "default": "latest"
+            },
+            "entrypoint": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "ci": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "docker_build": { "type": "boolean" },
+        "docker_test": { "type": "boolean" },
+        "packages": {
+          "type": "string",
+          "description": "Extra apk packages for CI (space-separated)"
+        }
+      }
+    },
+    "testdata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repo": { "type": "string", "format": "uri" },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "kgpipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Documentation-only links to KGpipe task names (code stays in KGpipe)",
+      "properties": {
+        "task_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

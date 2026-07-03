@@ -1,0 +1,14 @@
+name: REL
+kind:
+- docker_cli
+categories:
+- EntityLinking
+status: experimental
+execution:
+  docker:
+    image: kgt/rel
+    tag: latest
+ci:
+  docker_build: false
+  docker_test: false
+id: rel

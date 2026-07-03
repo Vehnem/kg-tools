@@ -1,0 +1,29 @@
+name: Valentine
+kind:
+- docker_cli
+categories:
+- SchemaAlignment
+status: maintained
+description: Schema matching for tabular data.
+upstream:
+  url: https://github.com/delftdata/valentine
+  license: Apache-2.0
+execution:
+  docker:
+    image: kgt/valentine
+    tag: latest
+    entrypoint:
+    - bash
+    - valentine.sh
+ci:
+  docker_build: true
+  docker_test: true
+testdata:
+  repo: https://github.com/Vehnem/kg-testdata
+  paths:
+  - _snippets/valentine/
+kgpipe:
+  task_refs:
+  - valentine_csv_matching
+  - valentine_csv_matching_v2
+id: valentine

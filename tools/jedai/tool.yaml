@@ -1,0 +1,11 @@
+name: JedAI
+kind:
+- python_package
+categories:
+- EntityResolution
+status: deprecated
+description: Legacy JedAI scripts; prefer pyjedai.
+ci:
+  docker_build: false
+  docker_test: false
+id: jedai

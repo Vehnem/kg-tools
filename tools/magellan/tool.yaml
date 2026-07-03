@@ -1,0 +1,11 @@
+name: Magellan
+kind:
+- python_package
+categories:
+- EntityResolution
+status: experimental
+description: Data integration and matching toolkit.
+ci:
+  docker_build: false
+  docker_test: false
+id: magellan

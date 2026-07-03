@@ -1,0 +1,30 @@
+name: PARIS
+kind:
+- docker_cli
+categories:
+- EntityResolution
+- SchemaAlignment
+status: maintained
+description: Ontology and schema alignment via probabilistic matching.
+upstream:
+  url: https://github.com/dig-team/PARIS
+  license: MIT
+execution:
+  docker:
+    image: kgt/paris
+    tag: latest
+    entrypoint:
+    - bash
+    - paris.sh
+ci:
+  docker_build: true
+  docker_test: true
+testdata:
+  repo: https://github.com/Vehnem/kg-testdata
+  paths:
+  - _snippets/paris/
+kgpipe:
+  task_refs:
+  - paris_entity_matching
+  - paris_exchange
+id: paris

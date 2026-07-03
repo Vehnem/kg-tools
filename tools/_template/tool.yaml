@@ -1,0 +1,25 @@
+id: example
+name: Example Tool
+kind:
+  - docker_cli
+categories:
+  - DatasetUtility
+status: experimental
+description: Template for adding a new dockerized tool to the catalog.
+upstream:
+  url: https://github.com/vehnem/kg-tools
+  license: MIT
+execution:
+  docker:
+    image: kgt/example
+    tag: latest
+    entrypoint:
+      - bash
+      - tool.sh
+ci:
+  docker_build: true
+  docker_test: false
+testdata:
+  repo: https://github.com/Vehnem/kg-testdata
+  paths:
+    - _snippets/

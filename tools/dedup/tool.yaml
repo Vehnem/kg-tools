@@ -1,0 +1,12 @@
+name: Dedup
+kind:
+- dataset_utility
+categories:
+- EntityResolution
+- DatasetUtility
+status: experimental
+description: Deduplication utility scripts.
+ci:
+  docker_build: false
+  docker_test: false
+id: dedup

@@ -1,0 +1,15 @@
+name: RMLMapper
+kind:
+- docker_cli
+categories:
+- StructureTransformation
+status: experimental
+description: RML mapping to RDF.
+execution:
+  docker:
+    image: kgt/rmlmapper
+    tag: latest
+ci:
+  docker_build: false
+  docker_test: false
+id: rmlmapper

@@ -1,0 +1,11 @@
+name: DeepMatcher
+kind:
+- python_package
+categories:
+- EntityResolution
+status: experimental
+description: Deep learning entity matching (documentation stub).
+ci:
+  docker_build: false
+  docker_test: false
+id: deepmatcher

@@ -1,0 +1,18 @@
+name: REBEL
+kind:
+- docker_cli
+categories:
+- InformationExtraction
+status: experimental
+description: Relation extraction using REBEL.
+execution:
+  docker:
+    image: kgt/rebel
+    tag: latest
+ci:
+  docker_build: false
+  docker_test: false
+kgpipe:
+  task_refs:
+  - rebel_extraction
+id: rebel

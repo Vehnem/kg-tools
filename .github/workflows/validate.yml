@@ -1,0 +1,30 @@
+name: Validate catalog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'catalog/**'
+      - '_scripts/**'
+      - '.github/workflows/validate.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install script dependencies
+        run: pip install -r _scripts/requirements.txt
+
+      - name: Validate tool.yaml manifests
+        run: python _scripts/validate_catalog.py
+
+      - name: Check README is up to date
+        run: python _scripts/gen_readme.py --check

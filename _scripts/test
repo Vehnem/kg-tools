@@ -1,33 +1,32 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Test docker images for tools listed in tool.yaml (ci.docker_test=true).
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
 if [ "$#" -gt 0 ]; then
   targets=("$@")
 else
   targets=()
-  for dir in */; do
-    dirname="${dir%/}"
-    first_char="${dirname:0:1}"
-    if [[ "$first_char" != "_" && "$first_char" != "." && -d "$dirname" ]]; then
-      targets+=("$dirname")
-    fi
+  for manifest in tools/*/tool.yaml; do
+  [ -f "$manifest" ] || continue
+  tool_id="$(basename "$(dirname "$manifest")")"
+  [ "$tool_id" = "_template" ] && continue
+  if python3 -c "import yaml; d=yaml.safe_load(open('$manifest')); exit(0 if d.get('ci',{}).get('docker_test') else 1)" 2>/dev/null; then
+    targets+=("$tool_id")
+  fi
   done
 fi
 
-for dirname in "${targets[@]}"; do
-
-  if [[ -d "$dirname" ]]; then
-    echo -e "==> Test $dirname\n"
-
-    cd "$dirname"
-
-    if make docker_test; then
-      echo "✔ Successfully tested: $dirname"
-    else
-      echo "✖ Failed to test: $dirname"
-      exit 1
-    fi
-
-    echo -e "\n\n"
-    cd ..
+for tool_id in "${targets[@]}"; do
+  docker_dir="tools/${tool_id}/docker"
+  if [ ! -d "$docker_dir" ]; then
+    echo "Missing $docker_dir"
+    exit 1
   fi
+  echo "==> Test $tool_id"
+  make -C "$docker_dir" docker_test
+  echo "✔ Successfully tested: $tool_id"
 done

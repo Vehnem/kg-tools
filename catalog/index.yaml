@@ -1,0 +1,18 @@
+# Curated tool lists for CI subsets and documentation.
+
+featured:
+  - paris
+  - corenlp
+  - valentine
+  - pyjedai
+  - agreementmaker
+  - dbpedia-spotlight
+
+moviekg:
+  description: Tools built by the MovieKG experiment Docker setup
+  tools:
+    - paris
+    - valentine
+    - pyjedai
+    - corenlp
+    - dbpedia-spotlight

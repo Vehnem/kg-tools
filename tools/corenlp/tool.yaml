@@ -1,0 +1,30 @@
+name: Stanford CoreNLP
+kind:
+- docker_cli
+categories:
+- InformationExtraction
+status: maintained
+description: OpenIE and KBP extraction wrappers using Stanford CoreNLP.
+upstream:
+  url: https://stanfordnlp.github.io/CoreNLP/
+  license: GPL-3.0
+execution:
+  docker:
+    image: kgt/corenlp
+    tag: latest
+    entrypoint:
+    - bash
+    - corenlp.sh
+ci:
+  docker_build: true
+  docker_test: true
+testdata:
+  repo: https://github.com/Vehnem/kg-testdata
+  paths:
+  - _snippets/corenlp/
+kgpipe:
+  task_refs:
+  - corenlp_openie_extraction
+  - corenlp_exchange
+  - corenlp_kbp_extraction
+id: corenlp

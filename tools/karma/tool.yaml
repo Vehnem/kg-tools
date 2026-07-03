@@ -1,0 +1,11 @@
+name: Karma
+kind:
+- python_package
+categories:
+- StructureTransformation
+status: experimental
+description: Wrapper placeholder for Web-Karma.
+ci:
+  docker_build: false
+  docker_test: false
+id: karma

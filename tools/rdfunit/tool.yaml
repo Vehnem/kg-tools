@@ -1,0 +1,15 @@
+name: RDFUnit
+kind:
+- docker_cli
+categories:
+- ReasoningValidation
+status: experimental
+description: RDF data quality assessment.
+execution:
+  docker:
+    image: kgt/rdfunit
+    tag: latest
+ci:
+  docker_build: false
+  docker_test: false
+id: rdfunit

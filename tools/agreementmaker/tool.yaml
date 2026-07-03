@@ -1,0 +1,21 @@
+name: AgreementMakerLight
+kind:
+- docker_cli
+categories:
+- SchemaAlignment
+status: maintained
+description: Ontology matching with AgreementMakerLight.
+execution:
+  docker:
+    image: kgt/agreementmaker
+    tag: latest
+    entrypoint:
+    - bash
+    - agreementmaker.sh
+ci:
+  docker_build: true
+  docker_test: false
+kgpipe:
+  task_refs:
+  - agreementmaker_ontology_matching
+id: agreementmaker
