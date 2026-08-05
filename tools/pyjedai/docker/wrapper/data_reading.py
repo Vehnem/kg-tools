@@ -5,12 +5,12 @@ from pyjedai.evaluation import Evaluation
 
 def read(file_path_1, file_path_2,
          ground_truth_path=None,
-         id_column_name_1=None, id_column_name_2=None):
+         id_column_name_1=None, id_column_name_2=None, sep='|'):
     def safe_read_csv(path):
         try:
-            return pd.read_csv(path, sep=',', engine='python', na_filter=False, encoding='utf-8')
+            return pd.read_csv(path, sep=sep, engine='python', na_filter=False, encoding='utf-8')
         except UnicodeDecodeError:
-            return pd.read_csv(path, sep=',', engine='python', na_filter=False, encoding='ISO-8859-1')
+            return pd.read_csv(path, sep=sep, engine='python', na_filter=False, encoding='ISO-8859-1')
 
     d1 = safe_read_csv(file_path_1)
     d2 = safe_read_csv(file_path_2)

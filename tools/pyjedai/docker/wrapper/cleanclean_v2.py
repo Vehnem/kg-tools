@@ -10,7 +10,7 @@ import block_cleaning
 from comparison_cleaning import weighted_edge_pruning
 import entity_matching
 
-
+#1:1 Matches
 def main():
     parser = argparse.ArgumentParser(description='Entity Resolution with optional blocking attributes')
     parser.add_argument('--file1', required=True, help='path to file1')
@@ -23,15 +23,25 @@ def main():
 
     os.makedirs(args.output+".tmp", exist_ok=True)
 
-    for left_file in os.listdir(args.file1):
-        for right_file  in os.listdir(args.file2):
+    if os.path.isdir(args.file1):
+        left_files = os.listdir(args.file1)
+    else:
+        left_files = [args.file1]
+
+    if os.path.isdir(args.file2):
+        right_files = os.listdir(args.file2)
+    else:
+        right_files = [args.file2]
+
+    for left_file in left_files:
+        for right_file in right_files:
             try:
                 match_csv(
-                    os.path.join(args.file1, left_file),
-                    os.path.join(args.file2, right_file), 
+                    args.file1,
+                    args.file2,
                     args.attr1, 
                     args.attr2, 
-                    os.path.join(args.output+".tmp", f"{left_file}_{right_file}.json"))
+                    args.output)
             except Exception as e:
                 print(f"Error matching {left_file} and {right_file}: {e}")
                 with open(os.path.join(args.output+".tmp", f"{left_file}_{right_file}.json"), "w") as f:
@@ -39,16 +49,15 @@ def main():
 
     selected_matches = {}
 
-    for file in os.listdir(args.output+".tmp"):
-        with open(os.path.join(args.output+".tmp", file), "r") as f:
-            data = json.load(f)
-            matches = data["matches"]
-            for match in matches:
-                if match["id_1"] not in selected_matches:
+    with open(args.output, "r") as f:
+        data = json.load(f)
+        matches = data["matches"]
+        for match in matches:
+            if match["id_1"] not in selected_matches:
+                selected_matches[match["id_1"]] = match
+            else:
+                if selected_matches[match["id_1"]]["score"] < match["score"]:
                     selected_matches[match["id_1"]] = match
-                else:
-                    if selected_matches[match["id_1"]]["score"] < match["score"]:
-                        selected_matches[match["id_1"]] = match
 
     doc = {"matches": list(selected_matches.values()), "blocks": [], "clusters": []}
 
@@ -64,11 +73,11 @@ def match_csv(file1, file2, attr1, attr2, output_file):
     id_col1 = data.id_column_name_1
     id_col2 = data.id_column_name_2
 
-    data_cleaning.clean(data)
+    #data_cleaning.clean(data)
 
     if not (attr1 and attr2):
-        attributes1 = []
-        attributes2 = []
+        attributes1 = None
+        attributes2 = None
     else:
         attributes1 = [attr.strip() for attr in attr1.split(',')]
         attributes2 = [attr.strip() for attr in attr2.split(',')]
@@ -80,10 +89,10 @@ def match_csv(file1, file2, attr1, attr2, output_file):
 
     filtered_blocks = block_cleaning.clean(cleaned_blocks, data)
 
-    candidate_pairs_blocks = weighted_edge_pruning.clean(filtered_blocks, data)
+    #candidate_pairs_blocks = weighted_edge_pruning.clean(filtered_blocks, data)
 
     # Matching
-    pairs_graph = entity_matching.match(candidate_pairs_blocks, data)
+    pairs_graph = entity_matching.match(filtered_blocks, data)
 
     print(pairs_graph)
     # Clustering

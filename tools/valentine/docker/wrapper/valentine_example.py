@@ -1,79 +1,191 @@
 import json
 import os
 import sys
+import glob
 import pandas as pd
-from valentine.metrics import F1Score, PrecisionTopNPercent
-
+import time
 from valentine import valentine_match
-from valentine.algorithms import JaccardDistanceMatcher
-import pprint
-pp = pprint.PrettyPrinter(indent=4, sort_dicts=False)
+from valentine.algorithms import (
+    Coma,
+    Cupid,
+    DistributionBased,
+    JaccardDistanceMatcher,
+    SimilarityFlooding,
+)
+
+MATCHERS = {
+    "Coma": Coma,
+    "Cupid": Cupid,
+    "DistributionBased": DistributionBased,
+    "JaccardDistanceMatcher": JaccardDistanceMatcher,
+    "SimilarityFlooding": SimilarityFlooding,
+}
+
+
+def load_ground_truth(mapping_file):
+    with open(mapping_file, encoding="utf8") as f:
+        mapping = json.load(f)
+
+    gt = set()
+
+    for m in mapping["matches"]:
+        gt.add((m["source_column"], m["target_column"]))
+
+    return gt
+
+
+def evaluate(predicted, ground_truth):
+    predicted = set(predicted)
+
+    tp = len(predicted & ground_truth)
+    fp = len(predicted - ground_truth)
+    fn = len(ground_truth - predicted)
+
+    precision = tp / (tp + fp) if tp + fp else 0
+    recall = tp / (tp + fn) if tp + fn else 0
+
+    if precision + recall:
+        f1 = 2 * precision * recall / (precision + recall)
+    else:
+        f1 = 0
+
+    return {
+        "TP": tp,
+        "FP": fp,
+        "FN": fn,
+        "Precision": precision,
+        "Recall": recall,
+        "F1": f1,
+    }
+
+
+def run_matcher(source_csv, target_csv, matcher_name, matcher_cls,
+                output_json, cutoff=None):
+    start = time.perf_counter()
+
+    df1 = pd.read_csv(source_csv, nrows=cutoff)
+    df2 = pd.read_csv(target_csv, nrows=cutoff)
+
+    matcher = matcher_cls()
+
+    matches = valentine_match([df1, df2], matcher)
+    one_to_one = matches.one_to_one_greedy()
+
+    results = []
+    predicted = []
+
+    for columnpair, score in one_to_one.items():
+        results.append({
+            "id_1": columnpair.source_column,
+            "id_2": columnpair.target_column,
+            "score": float(score),
+            "id_type": type(columnpair.source_column).__name__
+        })
+
+        predicted.append(
+            (columnpair.source_column, columnpair.target_column)
+        )
+
+    with open(output_json, "w", encoding="utf8") as f:
+        json.dump(
+            {"matches": results, "blocks": [], "clusters": []},
+            f,
+            indent=4,
+            ensure_ascii=False,
+        )
+
+    runtime = time.perf_counter() - start
+
+    return predicted, runtime
+
+
+def process_dataset(folder, output_root, cutoff):
+
+    source = glob.glob(os.path.join(folder, "*_source.csv"))[0]
+    target = glob.glob(os.path.join(folder, "*_target.csv"))[0]
+    mapping = glob.glob(os.path.join(folder, "*_mapping.json"))[0]
+
+    dataset_name = os.path.basename(folder)
+
+    dataset_output = os.path.join(output_root, dataset_name)
+    os.makedirs(dataset_output, exist_ok=True)
+
+    ground_truth = load_ground_truth(mapping)
+
+    rows = []
+
+    for matcher_name, matcher_cls in MATCHERS.items():
+
+        print(f"Running {matcher_name} on {os.path.basename(folder)}")
+
+        output_file = os.path.join(
+            str(dataset_output),
+            f"{matcher_name}_matches.json"
+        )
+
+        predicted, runtime = run_matcher(
+            source,
+            target,
+            matcher_name,
+            matcher_cls,
+            output_file,
+            cutoff,
+        )
+
+        metrics = evaluate(predicted, ground_truth)
+
+        rows.append({
+            "dataset": os.path.basename(folder),
+            "matcher": matcher_name,
+            "runtime_seconds": runtime,
+            **metrics
+        })
+
+    return rows
 
 
 def main():
-    if len(sys.argv) != 4 and len(sys.argv) != 5:
-        print("Usage: python main.py <path1> <path2> <outputfile> (<csv_cutoff>)")
+
+    if len(sys.argv) not in [2, 3]:
+        print("Usage:")
+        print("python benchmark.py <dataset_root> [cutoff]")
         sys.exit(1)
 
-    path1 = sys.argv[1]
-    path2 = sys.argv[2]
-    output_file = sys.argv[3]
+    root = sys.argv[1]
 
     cutoff = None
 
-    if "CSV_CUTOFF" in os.environ:
-        cutoff = os.environ["CSV_CUTOFF"]
+    if len(sys.argv) == 3:
+        cutoff = int(sys.argv[2])
 
-    if len(sys.argv) == 5:
-        cutoff = sys.argv[4]
+    evaluation_rows = []
 
-    try:
-        cutoff = int(cutoff)
-        if cutoff <= 0:
-            cutoff = None
-    except (TypeError, ValueError):
-        cutoff = None
+    output_folder_name = "benchmark_results"
+    output_root = os.path.join(root, output_folder_name)
+    os.makedirs(output_root, exist_ok=True)
 
-    if cutoff is not None:
-        print(f"cutoff is set to {cutoff}")
-    else:
-        print("Not using cutoff")
+    for entry in sorted(os.listdir(root)):
+        if entry == output_folder_name:
+            continue
 
-    # Load data using pandas
-    df1 = pd.read_csv(path1, nrows=cutoff)
-    df2 = pd.read_csv(path2, nrows=cutoff)
-    # Instantiate matcher and run
-    matcher = JaccardDistanceMatcher()
-    matches = valentine_match(df1, df2, matcher)
+        folder = os.path.join(root, entry)
 
-    # Print matches
-    print("Found the following matches:")
-    pp.pprint(matches)
+        if not os.path.isdir(folder):
+            continue
 
-    print("\nGetting the one-to-one matches:")
-    one_to_one_matches = matches.one_to_one()
-    pp.pprint(one_to_one_matches)
+        evaluation_rows.extend(
+            process_dataset(folder, output_root, cutoff)
+        )
 
-    print("\nThe MatcherResults object is a dict and can be treated such:")
-    for match in matches:
-        print(f"{str(match): <60} {matches[match]}")
+    df = pd.DataFrame(evaluation_rows)
 
-    # Convert matches to required output format
-    results = []
-    for ((_, left), (_, right)), measure in one_to_one_matches.items():
-        results.append({
-            "id_1": left,
-            "id_2": right,
-            "score": float(measure),
-            "id_type": type(left).__name__
-        })
+    df.to_csv(
+        os.path.join(output_root, "evaluation.csv"),
+        index=False,
+    )
 
-    output_data = {"matches": results, "blocks": [], "clusters": []}
+    print(df)
 
-    # Save matches to output file
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(output_data, f, ensure_ascii=False, indent=4)
-    print(f"Matches saved to {output_file}")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

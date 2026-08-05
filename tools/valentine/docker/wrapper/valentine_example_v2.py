@@ -6,6 +6,7 @@ from valentine.metrics import F1Score, PrecisionTopNPercent
 
 from valentine import valentine_match
 from valentine.algorithms import JaccardDistanceMatcher
+from valentine.algorithms import Coma
 import pprint
 pp = pprint.PrettyPrinter(indent=4, sort_dicts=False)
 
@@ -16,6 +17,7 @@ def match_csv(path1, path2, output_file, cutoff):
     df2 = pd.read_csv(path2, nrows=cutoff)
     # Instantiate matcher and run
     matcher = JaccardDistanceMatcher()
+    matcher = Coma()
     matches = valentine_match(df1, df2, matcher)
 
     # Print matches
