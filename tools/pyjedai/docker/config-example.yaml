@@ -1,0 +1,61 @@
+data_cleaning:
+  enabled: false
+  params:
+    remove_stopwords: true
+    remove_punctuation: true
+    remove_numbers: true
+    remove_unicodes: true
+
+blocking:
+  method: standard_blocking
+  attributes_1: null
+  attributes_2: null
+  method_params: {}
+
+block_purging:
+  enabled: false
+  method: block_purging
+  method_params:
+    smoothing_factor: 1.025
+
+block_cleaning:
+  enabled: false
+  method: block_filtering
+  method_params:
+    ratio: 0.8
+
+comparison_cleaning:
+  enabled: false
+  method: weighted_edge_pruning
+  method_params:
+    weighting_scheme: EJS
+
+matching:
+  matchers:
+    vector_cosine:
+      method: vector
+      metric: cosine
+      similarity_threshold: 0.8
+      embedding_model: all-MiniLM-L6-v2
+
+    char_bigram_tfidf:
+      method: entity_matching
+      metric: cosine
+      tokenizer: char_tokenizer
+      vectorizer: tfidf
+      qgram: 2
+      similarity_threshold: 0.8
+
+    word_tfidf:
+      method: entity_matching
+      metric: cosine
+      tokenizer: word_tokenizer
+      vectorizer: tfidf
+      qgram: 1
+      similarity_threshold: 0.8
+
+clustering:
+  enabled: false
+  method: unique_mapping_clustering
+  method_params:
+    similarity_threshold: 0.17

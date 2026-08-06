@@ -1,56 +1,39 @@
-import pyjedai.matching
-from pyjedai.matching import EntityMatching
+import time
 
-MATCHERS = {
-    "char_bigram_tfidf": dict(
-        metric="cosine",
-        tokenizer="char_tokenizer",
-        vectorizer="tfidf",
-        qgram=2,
-        similarity_threshold=0.0
-    ),
+from pyjedai.matching import EntityMatching, VectorBasedMatching
 
-    "char_trigram_tfidf": dict(
-        metric="cosine",
-        tokenizer="char_tokenizer",
-        vectorizer="tfidf",
-        qgram=3,
-        similarity_threshold=0.0
-    ),
-
-    "char_bigram_bow": dict(
-        metric="cosine",
-        tokenizer="char_tokenizer",
-        vectorizer="bow",
-        qgram=2,
-        similarity_threshold=0.0
-    ),
-
-    "char_trigram_bow": dict(
-        metric="cosine",
-        tokenizer="char_tokenizer",
-        vectorizer="bow",
-        qgram=3,
-        similarity_threshold=0.0
-    ),
-
-    "word_tfidf": dict(
-        metric="cosine",
-        tokenizer="word_tokenizer",
-        vectorizer="tfidf",
-        similarity_threshold=0.0
-    )
+MATCHING_CLASS_REGISTRY = {
+    "entity_matching": EntityMatching,
+    "vector": VectorBasedMatching,
 }
 
-def match(candidate_pairs_blocks, data):
-    em = EntityMatching(
-        metric='cosine',
-        tokenizer='char_tokenizer',
-        vectorizer='tfidf',
-        qgram=3,
-        similarity_threshold=0.0
-    )
+def match(matcher_cfg, blocks, data, df1, df2):
+    matcher_cfg = dict(matcher_cfg)
+    method = matcher_cfg.pop("method", "entity_matching")
+    if method not in MATCHING_CLASS_REGISTRY:
+        raise ValueError(
+            f"Unknown matching-Method '{method}'. "
+            f"Available: {list(MATCHING_CLASS_REGISTRY)}"
+        )
+    matcher_cls = MATCHING_CLASS_REGISTRY[method]
+    start = time.perf_counter()
 
-    pairs_graph = em.predict(candidate_pairs_blocks, data, tqdm_disable=True)
+    if method == "vector":
+        from sentence_transformers import SentenceTransformer
 
-    return pairs_graph
+        model_name = matcher_cfg.pop("embedding_model", "all-MiniLM-L6-v2")
+        text_col_1 = matcher_cfg.pop("text_column_1", df1.columns[1])
+        text_col_2 = matcher_cfg.pop("text_column_2", df2.columns[1])
+
+        model = SentenceTransformer(model_name)
+        vectors_d1 = model.encode(df1[text_col_1].tolist(), convert_to_numpy=True)
+        vectors_d2 = model.encode(df2[text_col_2].tolist(), convert_to_numpy=True)
+
+        em = matcher_cls(**matcher_cfg)
+        graph = em.predict(blocks, data, vectors_d1, vectors_d2, tqdm_disable=True)
+    else:
+        em = matcher_cls(**matcher_cfg)
+        graph = em.predict(blocks, data, tqdm_disable=True)
+
+    runtime = time.perf_counter() - start
+    return graph, runtime

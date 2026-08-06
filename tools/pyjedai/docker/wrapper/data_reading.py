@@ -1,7 +1,5 @@
 import pandas as pd
 from pyjedai.datamodel import Data
-from pyjedai.evaluation import Evaluation
-
 
 def read(file_path_1, file_path_2,
          ground_truth_path=None,
