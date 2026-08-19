@@ -14,7 +14,7 @@ execution:
     - agreementmaker.sh
 ci:
   docker_build: true
-  docker_test: false
+  docker_test: true
 kgpipe:
   task_refs:
   - agreementmaker_ontology_matching
