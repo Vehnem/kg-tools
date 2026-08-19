@@ -15,9 +15,9 @@ driven by a YAML/JSON config instead of hardcoded hyperparameters.
 
 ## Requirements
 
-- Python ≥ 3.7 (deepmatcher uses `torchtext.legacy`, which was removed in
+- Python ≥ 3.7 (tested Python 3.8) (deepmatcher uses `torchtext.legacy`, which was removed in
   newer torchtext versions — if installation fails, check for an older
-  `torchtext` version that still includes `torchtext.legacy`).
+  `torchtext` version that still includes `torchtext.legacy`). 
 - `git` (only for `make download`, to fetch the test datasets from the
   official deepmatcher repo).
 - Internet access on the first run, since `dm.data.process(...)`
