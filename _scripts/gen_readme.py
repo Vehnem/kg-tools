@@ -48,12 +48,14 @@ kg-tools/
     tool.yaml        # Machine-readable catalog entry
     README.md        # Usage documentation
     docker/          # Docker build context (when applicable)
-  _scripts/          # validate_catalog.py, gen_readme.py, gen_ci.py
+  _scripts/          # Maintenance CLI and supporting scripts (see _scripts/README.md)
 ```
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Repository maintenance commands are documented in [_scripts/README.md](_scripts/README.md).
 
 ## License
 
