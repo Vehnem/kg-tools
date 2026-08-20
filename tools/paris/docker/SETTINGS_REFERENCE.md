@@ -1,6 +1,6 @@
 # Configuration Reference — PARIS settings.ini
 
-Full documentation of every field in `settings.ini.example`, as consumed by `wrapper/paris.sh`.
+Full documentation of every field in `settings-example.ini`, as consumed by `wrapper/paris.sh`.
 
 ## How the wrapper uses this file
 
@@ -18,7 +18,7 @@ Since PARIS's ini parser (`Parameters.init`, in the bundled `javatools`
 library) processes the file line by line and simply overwrites the map
 entry for each key it encounters, the last occurrence of a key wins. Any
 values for `factstore1`, `factstore2`, `resultTSV`, or `home` already
-present in `settings.ini.example` are therefore always overridden by the
+present in `settings-example.ini` are therefore always overridden by the
 command-line arguments.
 
 ## Field reference
@@ -123,5 +123,5 @@ since only that mode accepts a configuration file.
 
 ## Full example
 
-See `example-settings.ini` — every field above is already present with a working PARIS default value 
+See `settings-example.ini` — every field above is already present with a working PARIS default value 
 (except the four path fields)

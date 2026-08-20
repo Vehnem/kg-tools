@@ -2,9 +2,9 @@
 
 INSTALL_DIR  := $(CURDIR)/bin
 OUTPUT_DIR   := $(CURDIR)/target
-KG_TESTDATA  ?= $(HOME)/papers/kg-testdata
+KG_TESTDATA  ?= $(HOME)/kg-testdata
 PARIS_DIR    := $(KG_TESTDATA)/_snippets/paris
-SETTINGS     ?= settings.ini.example
+SETTINGS     ?= $(CURDIR)/settings-example.ini
 JAR_URL      ?= https://github.com/dig-team/PARIS/releases/download/v0.3/paris_0_3.jar
 
 all: download test
@@ -23,8 +23,8 @@ test:
 	cp "$(PARIS_DIR)/person11.nt" $(INSTALL_DIR)/
 	cp "$(PARIS_DIR)/person12.nt" $(INSTALL_DIR)/
 	cp "$(SETTINGS)" $(INSTALL_DIR)/settings.ini
-	cp paris_wrapper.sh $(INSTALL_DIR)/
-	cd $(INSTALL_DIR) && bash paris_wrapper.sh settings.ini person11.nt person12.nt $(OUTPUT_DIR)
+	cp wrapper/paris.sh $(INSTALL_DIR)/
+	cd $(INSTALL_DIR) && bash paris.sh settings.ini person11.nt person12.nt $(OUTPUT_DIR)
 
 clean:
 	rm -rf $(INSTALL_DIR) $(OUTPUT_DIR)
@@ -32,8 +32,16 @@ clean:
 docker_build:
 	docker build -t kgt/paris .
 
-docker_test:
-	docker run --rm kgt/paris bash -c 'java -jar *.jar; status=$$?; if [ "$$status" -eq 63 ]; then echo "Smoke test OK: jar runs, exit code 63 as expected for no-args invocation."; else echo "Smoke test FAILED: unexpected exit code $$status" >&2; exit 1; fi'
+docker_test: create_outputdir
+	mkdir -p $(OUTPUT_DIR)/data
+	cp $(PARIS_DIR)/person11.nt $(OUTPUT_DIR)/data; \
+	cp $(PARIS_DIR)/person12.nt $(OUTPUT_DIR)/data; \
+	cp $(SETTINGS) $(OUTPUT_DIR)/data/settings.ini; \
+	docker run --rm -v $(OUTPUT_DIR):/output kgt/paris:latest \
+		bash paris.sh /output/data/settings.ini /output/data/person11.nt /output/data/person12.nt /output
+
+create_outputdir:
+	mkdir -p $(OUTPUT_DIR)
 
 docker_help:
 	@echo "Example usage of Paris Docker"

@@ -9,7 +9,7 @@ Relations, Instances, and Schema), driven by an ini-style `settings.ini` file.
 | File                    | Purpose                                                                                                                    |
 |-------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | `wrapper/paris.sh`      | Shell wrapper around `java -jar paris.jar`; merges a `settings.ini` with the input/output paths given on the command line. |
-| `example-settings.ini`  | Example settings file with every field PARIS supports (verified against the PARIS source code).                            |
+| `settings-example.ini`  | Example settings file with every field PARIS supports (verified against the PARIS source code).                            |
 | `SETTINGS_REFERENCE.md` | Full reference of every `settings.ini` field, valid values, and defaults.                                                  |
 | `Makefile`              | Setup (jar download) and test run via `make`.                                                                              |
 
@@ -40,7 +40,7 @@ make test SETTINGS=my_settings.ini
 Or directly without `make`:
 
 ```bash
-bash paris_wrapper.sh settings.ini.example path/to/kb1.nt path/to/kb2.nt output/
+bash paris_wrapper.sh settings-example.ini path/to/kb1.nt path/to/kb2.nt output/
 ```
 
 `paris.sh` copies the given `settings.ini`, then appends
