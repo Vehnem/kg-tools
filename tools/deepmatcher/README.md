@@ -5,13 +5,13 @@ driven by a YAML/JSON config instead of hardcoded hyperparameters.
 
 ## Files
 
-| File                                         | Purpose                                                                                      |
-|----------------------------------------------|----------------------------------------------------------------------------------------------|
-| `run_deepmatcher.py`                         | Main script: training, evaluation, prediction, optional score thresholding.                  |
-| `deepmatcher_config.example.yaml`            | Example config with all available parameters (verified against the deepmatcher source code). |
-| `DEEPMATCHER_CONFIG_REFERENCE.md` / `.en.md` | Full reference of all config parameters, options, and defaults (DE/EN).                      |
-| `deepmatcher.sh`                             | Shell wrapper around `run_deepmatcher.py`, mainly intended for the Docker image.             |
-| `Makefile`                                   | Setup (venv, repo clone) and test run via `make`.                                            |
+| File                              | Purpose                                                                          |
+|-----------------------------------|----------------------------------------------------------------------------------|
+| `wrapper/run_deepmatcher.py`      | Main script: training, evaluation, prediction, optional score thresholding.      |
+| `config-example.yaml`             | Example config with all available parameters.                                    |
+| `DEEPMATCHER_CONFIG_REFERENCE.md` | Full reference of all config parameters, options, and defaults (DE/EN).          |
+| `wrapper/deepmatcher.sh`          | Shell wrapper around `run_deepmatcher.py`, mainly intended for the Docker image. |
+| `Makefile`                        | Setup (venv, repo clone) and test run via `make`.                                |
 
 ## Requirements
 
