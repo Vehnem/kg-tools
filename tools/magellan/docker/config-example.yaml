@@ -1,0 +1,92 @@
+io:
+  ltable: dblp_demo.csv
+  rtable: acm_demo.csv
+  l_key: id
+  r_key: id
+  labeled_data: labeled_data_demo.csv   # optional, only needed for ML matchers / evaluation
+
+blocking:
+  combine: union
+  blockers:
+    - name: overlap_name
+      method: overlap_blocker
+      block_attr_l: authors
+      block_attr_r: authors
+      l_output_attrs: [title, authors, paper year]
+      r_output_attrs: [title, authors, paper year]
+      show_progress: false
+      n_jobs: 1
+      method_params:
+        overlap_size: 1
+        rem_stop_words: true
+        q_val: null
+        word_level: true
+
+    - name: exact_zip
+      method: attr_equivalence_blocker
+      block_attr_l: paper year
+      block_attr_r: paper year
+      l_output_attrs: [title, authors, paper year]
+      r_output_attrs: [title, authors, paper year]
+      n_jobs: 1
+
+candidate_set:
+  drop_duplicates: true
+
+debug_blocker:
+  enabled: false
+  output_size: 200
+  n_jobs: 1
+  output_path: debug_blocker_output.csv
+
+labeling:
+  strategy: from_file      # from_file | none
+  label_column: label
+
+feature_generation:
+  validate_inferred_attr_types: false
+  select_features: null    # e.g. [name_name_lev_sim, zipcode_zipcode_exm] to restrict auto-generated features
+  attrs_before: null
+  attrs_after: null
+  blackbox_features: []    # e.g. [{feature_name: custom_sim, function: myfeatures.custom_sim}]
+  show_progress: false
+  n_jobs: 1
+
+matching:
+  matchers:
+    random_forest_default:
+      method: random_forest
+      method_params:
+        n_estimators: 100
+        random_state: 42
+      train_test_split:
+        train_proportion: 0.5
+        random_state: 42
+
+    xgb_default:
+      method: xgboost
+      method_params:
+        n_estimators: 100
+        max_depth: 4
+        random_state: 42
+        eval_metric: logloss
+      train_test_split:
+        train_proportion: 0.5
+        random_state: 42
+
+    name_rule_check:
+      method: rule_based
+      rules:
+        - ["title_title_lev_sim(ltuple, rtuple) > 0.7"]
+
+matcher_selection:
+  enabled: false
+  candidates: [random_forest_default, xgb_default]   # must all be ML matchers from matching.matchers
+  metric_to_select_matcher: f1        # precision | recall | f1
+  metrics_to_display: [precision, recall, f1]
+  k: 5
+  random_state: 42
+  output_csv: matcher_selection.csv
+
+evaluation:
+  output_csv: evaluation.csv

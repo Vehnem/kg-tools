@@ -1,0 +1,4 @@
+py-entitymatching==0.4.2
+pandas>=2.0,<2.2
+PyYAML>=6.0
+xgboost>=2.0
