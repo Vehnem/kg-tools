@@ -29,6 +29,7 @@ Living document for the catalog restructure (kg-tools only; KGpipe unchanged).
 
 - [x] `catalog/index.yaml` featured list rendered in `tools/README.md`
 - [ ] `catalog/index.yaml` moviekg-set
+- [x] GitHub Pages catalog (`docs/` + Just the Docs)
 - [ ] Fork-friendly docs in README
 - [ ] Remove legacy `_example/` after contributors adopt `_template`
 
@@ -41,4 +42,5 @@ Living document for the catalog restructure (kg-tools only; KGpipe unchanged).
 ```bash
 python _scripts/gen_ci.py
 python _scripts/gen_readme.py
+python _scripts/gen_pages.py
 ```

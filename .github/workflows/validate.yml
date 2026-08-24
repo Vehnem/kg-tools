@@ -7,6 +7,7 @@ on:
     paths:
       - 'tools/**'
       - 'catalog/**'
+      - 'docs/**'
       - '_scripts/**'
       - '.github/workflows/validate.yml'
 

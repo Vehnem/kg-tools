@@ -42,7 +42,12 @@ def main():
     generate_parser = subparsers.add_parser(
         "generate", help="regenerate derived repository files"
     )
-    generate_parser.add_argument("artifact", choices=("readme", "ci", "all"))
+    generate_parser.add_argument("artifact", choices=("readme", "pages", "ci", "all"))
+
+    subparsers.add_parser(
+        "kgpipe-test",
+        help="run KGpipe task pytest cases locally and write catalog/reports/kgpipe-tasks.json",
+    )
 
     args = parser.parse_args()
     python = sys.executable
@@ -53,7 +58,11 @@ def main():
         status = run(python, str(SCRIPTS_DIR / "validate_catalog.py"))
         if status:
             return status
-        return run(python, str(SCRIPTS_DIR / "gen_readme.py"), "--check")
+        for script in ("gen_readme.py", "gen_pages.py"):
+            status = run(python, str(SCRIPTS_DIR / script), "--check")
+            if status:
+                return status
+        return 0
     if args.command in ("build", "test"):
         return run(str(SCRIPTS_DIR / args.command), *args.tools)
     if args.command == "generate":
@@ -61,9 +70,24 @@ def main():
             status = run(python, str(SCRIPTS_DIR / "gen_readme.py"))
             if status:
                 return status
+        if args.artifact in ("pages", "all"):
+            status = run(python, str(SCRIPTS_DIR / "gen_pages.py"))
+            if status:
+                return status
         if args.artifact in ("ci", "all"):
             return run(python, str(SCRIPTS_DIR / "gen_ci.py"))
         return 0
+    if args.command == "kgpipe-test":
+        return run(
+            python,
+            "-m",
+            "pytest",
+            "tests/kgpipe",
+            "-m",
+            "kgpipe",
+            "-o",
+            "addopts=",
+        )
 
     parser.error("unknown command")
 

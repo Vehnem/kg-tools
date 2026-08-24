@@ -2,17 +2,19 @@
 
 # Tool catalog
 
-Tools in this repository, grouped by category. Kind, Docker image, and KGpipe
-task refs live on each tool's README.
+Tools in this repository, grouped by category.
+
+- **wrapper** — CLI wrapper under `docker/wrapper/` (or a `*wrapper*` script)
+- **kgpipe** — KGpipe task names from `tool.yaml`; *defined here* if `kgpipe/` lives in this repo
 
 ## Featured
 
-- **[PARIS](paris/README.md)** — Ontology and schema alignment via probabilistic matching. *(maintained)*
-- **[Stanford CoreNLP](corenlp/README.md)** — OpenIE and KBP extraction wrappers using Stanford CoreNLP. *(maintained)*
-- **[Valentine](valentine/README.md)** — Schema matching for tabular data. *(maintained)*
-- **[PyJedAI](pyjedai/README.md)** — Entity resolution toolkit (Python JedAI). *(maintained)*
-- **[AgreementMakerLight](agreementmaker/README.md)** — Ontology matching with AgreementMakerLight. *(maintained)*
-- **[DBpedia Spotlight](dbpedia-spotlight/README.md)** — Entity linking service for DBpedia. *(maintained)*
+- **[PARIS](paris/README.md)** — Ontology and schema alignment via probabilistic matching. *(maintained)* · wrapper · kgpipe: `paris_entity_matching`, `paris_exchange`
+- **[Stanford CoreNLP](corenlp/README.md)** — OpenIE and KBP extraction wrappers using Stanford CoreNLP. *(maintained)* · wrapper · kgpipe: `corenlp_openie_extraction`, `corenlp_exchange`, `corenlp_kbp_extraction`
+- **[Valentine](valentine/README.md)** — Schema matching for tabular data. *(maintained)* · wrapper · kgpipe: `valentine_csv_matching`, `valentine_csv_matching_v2`
+- **[PyJedAI](pyjedai/README.md)** — Entity resolution toolkit (Python JedAI). *(maintained)* · wrapper · kgpipe: `pyjedai_entity_matching`, `pyjedai_entity_matching_v2` ([defined here](pyjedai/kgpipe/))
+- **[AgreementMakerLight](agreementmaker/README.md)** — Ontology matching with AgreementMakerLight. *(maintained)* · wrapper · kgpipe: `agreementmaker_ontology_matching`
+- **[DBpedia Spotlight](dbpedia-spotlight/README.md)** — Entity linking service for DBpedia. *(maintained)* · kgpipe: `dbpedia_spotlight_ner_nel`, `dbpedia_spotlight_exchange`
 
 ## Structure transformation
 
@@ -25,9 +27,9 @@ Mapping, conversion, and structural data transformation
 
 Entity, relation, and triple extraction from text
 
-- **[REBEL](rebel/README.md)** — Relation extraction using REBEL. *(experimental)*
-- **[Stanford CoreNLP](corenlp/README.md)** — OpenIE and KBP extraction wrappers using Stanford CoreNLP. *(maintained)*
-- **[Stanford OpenIE](stanford-openie/README.md)** — Legacy OpenIE wrapper; prefer corenlp. *(deprecated)*
+- **[REBEL](rebel/README.md)** — Relation extraction using REBEL. *(experimental)* · wrapper · kgpipe: `rebel_extraction`
+- **[Stanford CoreNLP](corenlp/README.md)** — OpenIE and KBP extraction wrappers using Stanford CoreNLP. *(maintained)* · wrapper · kgpipe: `corenlp_openie_extraction`, `corenlp_exchange`, `corenlp_kbp_extraction`
+- **[Stanford OpenIE](stanford-openie/README.md)** — Legacy OpenIE wrapper; prefer corenlp. *(deprecated)* · wrapper
 
 ## Entity resolution
 
@@ -35,27 +37,27 @@ Matching, blocking, clustering, and deduplication
 
 - **[Dedup](dedup/README.md)** — Deduplication utility scripts. *(experimental)*
 - **[DeepMatcher](deepmatcher/README.md)** — Deep learning entity matching (documentation stub). *(experimental)*
-- **[FLORA](flora/README.md)** — Ontology matching with FLORA. *(experimental)*
+- **[FLORA](flora/README.md)** — Ontology matching with FLORA. *(experimental)* · wrapper
 - **[JedAI](jedai/README.md)** — Legacy JedAI scripts; prefer pyjedai. *(deprecated)*
 - **[Magellan](magellan/README.md)** — Data integration and matching toolkit. *(experimental)*
-- **[PARIS](paris/README.md)** — Ontology and schema alignment via probabilistic matching. *(maintained)*
-- **[PyJedAI](pyjedai/README.md)** — Entity resolution toolkit (Python JedAI). *(maintained)*
+- **[PARIS](paris/README.md)** — Ontology and schema alignment via probabilistic matching. *(maintained)* · wrapper · kgpipe: `paris_entity_matching`, `paris_exchange`
+- **[PyJedAI](pyjedai/README.md)** — Entity resolution toolkit (Python JedAI). *(maintained)* · wrapper · kgpipe: `pyjedai_entity_matching`, `pyjedai_entity_matching_v2` ([defined here](pyjedai/kgpipe/))
 
 ## Schema alignment
 
 Schema matching and ontology alignment
 
-- **[AgreementMakerLight](agreementmaker/README.md)** — Ontology matching with AgreementMakerLight. *(maintained)*
+- **[AgreementMakerLight](agreementmaker/README.md)** — Ontology matching with AgreementMakerLight. *(maintained)* · wrapper · kgpipe: `agreementmaker_ontology_matching`
 - **[LIMES](limes/README.md)** — Link discovery and schema matching. *(experimental)*
-- **[PARIS](paris/README.md)** — Ontology and schema alignment via probabilistic matching. *(maintained)*
-- **[Valentine](valentine/README.md)** — Schema matching for tabular data. *(maintained)*
+- **[PARIS](paris/README.md)** — Ontology and schema alignment via probabilistic matching. *(maintained)* · wrapper · kgpipe: `paris_entity_matching`, `paris_exchange`
+- **[Valentine](valentine/README.md)** — Schema matching for tabular data. *(maintained)* · wrapper · kgpipe: `valentine_csv_matching`, `valentine_csv_matching_v2`
 
 ## Entity linking
 
 Linking extracted mentions to knowledge graph entities
 
-- **[DBpedia Spotlight](dbpedia-spotlight/README.md)** — Entity linking service for DBpedia. *(maintained)*
-- **[FALCON](falcon/README.md)** — Entity linking via FALCON 2.0. *(experimental)*
+- **[DBpedia Spotlight](dbpedia-spotlight/README.md)** — Entity linking service for DBpedia. *(maintained)* · kgpipe: `dbpedia_spotlight_ner_nel`, `dbpedia_spotlight_exchange`
+- **[FALCON](falcon/README.md)** — Entity linking via FALCON 2.0. *(experimental)* · kgpipe: `falcon_ner_nel_rl`, `falcon_exchange`
 - **[REL](rel/README.md)** — Radboud Entity Linker for entity linking and disambiguation. *(experimental)*
 
 ## Reasoning validation
@@ -63,7 +65,7 @@ Linking extracted mentions to knowledge graph entities
 Reasoning, consistency checking, and validation
 
 - **[Pellet](pellet/README.md)** — OWL DL reasoner for consistency checking. *(maintained)*
-- **[RDFUnit](rdfunit/README.md)** — RDF data quality assessment. *(experimental)*
+- **[RDFUnit](rdfunit/README.md)** — RDF data quality assessment. *(experimental)* · wrapper
 
 ## Visualization
 

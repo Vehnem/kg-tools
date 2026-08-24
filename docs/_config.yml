@@ -1,0 +1,16 @@
+title: kg-tools
+description: Knowledge Graph Integration Tool Catalog
+theme: just-the-docs
+
+url: https://vehnem.github.io
+
+aux_links:
+  GitHub: https://github.com/vehnem/kg-tools
+
+search_enabled: true
+heading_anchors: true
+
+exclude:
+  - RESTRUCTURE_PLAN.md
+  - Gemfile
+  - Gemfile.lock
