@@ -46,7 +46,7 @@ regardless of their CI flags.
 | --- | --- |
 | `manage.py` | Stable contributor-facing command dispatcher |
 | `validate_catalog.py` | Validate manifests against `catalog/schema/tool.schema.json` and check their directory layout |
-| `gen_readme.py` | Generate the catalog tables in the root `README.md`; `--check` only compares them |
+| `gen_readme.py` | Generate the catalog listings in `tools/README.md`; `--check` only compares them |
 | `gen_ci.py` | Generate `.github/workflows/docker-matrix.yml` from manifest CI flags |
 | `build` | Build selected Docker tools, or every tool with `ci.docker_build: true` |
 | `test` | Test selected Docker tools, or every tool with `ci.docker_test: true` |

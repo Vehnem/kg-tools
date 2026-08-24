@@ -4,6 +4,7 @@ kind:
 categories:
 - EntityResolution
 status: experimental
+description: Ontology matching with FLORA.
 execution:
   docker:
     image: kgt/flora

@@ -30,6 +30,7 @@ python _scripts/manage.py generate ci
 - Use `kgpipe.task_refs` only as documentation links to existing KGpipe task names.
 - Set `execution.docker.image` to the image name **without** tag (e.g. `kgt/paris`).
 - Pick `kind` and `categories` from [catalog/categories.yaml](catalog/categories.yaml).
+- `description` is shown in the generated [tools/README.md](tools/README.md) catalog.
 
 ## Docker image naming
 
@@ -46,7 +47,7 @@ Prefer fixtures from [kg-testdata](https://github.com/Vehnem/kg-testdata). Docum
 ## Pull request checklist
 
 - [ ] `tool.yaml` passes `python _scripts/manage.py validate`
-- [ ] `README.md` updated for the tool (and root README via `gen_readme.py`)
+- [ ] `README.md` updated for the tool (and `tools/README.md` via `gen_readme.py`)
 - [ ] Upstream URL and license noted
 - [ ] `make -C tools/<id>/docker docker_build` succeeds (if docker tool)
 - [ ] `kgpipe.task_refs` added when a KGpipe wrapper exists (documentation only)
