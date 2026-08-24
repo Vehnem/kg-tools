@@ -211,5 +211,5 @@ clustering:
 
 ## Full example with all stages enabled
 
-See `pipeline_config.example.yaml` — it has all stages populated with
+See `config-example.yaml` — it has all stages populated with
 sensible default parameters and is ready to run.

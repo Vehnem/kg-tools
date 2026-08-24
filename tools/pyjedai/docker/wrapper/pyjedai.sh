@@ -1,5 +1,5 @@
 #!/bin/bash
-# Nutzung:
+# Usage:
 # ./pyjedai.sh infile1 infile2 outputfile [config] [gt] [separator] [attr1] [attr2]
 
 IN1=$1

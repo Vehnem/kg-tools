@@ -1,15 +1,22 @@
-FROM python:3.8
+FROM python:3.9
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y wget unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y wget unzip git && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN pip install pyjedai
+RUN pip install git+https://github.com/AI-team-UoA/pyJedAI.git
 
-COPY /wrapper /app/
+COPY wrapper/ /app/
 
-#FIX VectorBasedMatching
-COPY /fixes/matching.py /tmp/matching.py
-RUN cp /tmp/matching.py /usr/local/lib/python3.8/site-packages/pyjedai/matching.py
+COPY fixes/matching.py /tmp/matching.py
+COPY fixes/utils.py /tmp/utils.py
+
+RUN cp /tmp/matching.py \
+    /usr/local/lib/python3.9/site-packages/pyjedai/matching.py
+
+RUN cp /tmp/utils.py \
+    /usr/local/lib/python3.9/site-packages/pyjedai/utils.py
 
 WORKDIR /app

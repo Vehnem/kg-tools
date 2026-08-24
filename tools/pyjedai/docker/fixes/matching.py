@@ -626,6 +626,31 @@ class VectorBasedMatching(AbstractEntityMatching):
 
         return self.pairs
 
+    def _predict_raw_blocks(self, blocks: dict) -> None:
+        """Method for similarity evaluation blocks after Block building
+
+        Args:
+            blocks (dict): Block building blocks
+        """
+        if self.data.is_dirty_er:
+            for _, block in blocks.items():
+                entities_array = list(block.entities_D1)
+                for index_1 in range(0, len(entities_array), 1):
+                    for index_2 in range(index_1+1, len(entities_array), 1):
+                        similarity = self._similarity(entities_array[index_1],
+                                                      entities_array[index_2])
+                        self._insert_to_graph(entities_array[index_1],
+                                              entities_array[index_2],
+                                              similarity)
+                self._progress_bar.update(1)
+        else:
+            for _, block in blocks.items():
+                for entity_id1 in block.entities_D1:
+                    for entity_id2 in block.entities_D2:
+                        similarity = self._similarity(entity_id1, entity_id2)
+                        self._insert_to_graph(entity_id1, entity_id2, similarity)
+                self._progress_bar.update(1)
+
     def _similarity(self, entity_id1: int, entity_id2: int) -> float:
         return vector_metrics_mapping[self._metric](self.vectors[entity_id1], self.vectors[entity_id2])
 
