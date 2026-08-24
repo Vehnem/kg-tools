@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vehnem/kg-tools/catalog/schema/kgpipe_task_test.schema.json",
+  "title": "kg-tools KGpipe task test case",
+  "type": "object",
+  "required": ["task", "inputs", "outputs"],
+  "additionalProperties": false,
+  "properties": {
+    "task": {
+      "type": "string",
+      "minLength": 1,
+      "description": "KgTask.name to execute"
+    },
+    "description": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Slot name to input file path (relative to this YAML file)"
+    },
+    "outputs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Slot name to expected output file path (relative to this YAML file). The harness writes actual outputs to a temp dir and compares when the expected file exists."
+    },
+    "config": {
+      "type": "object",
+      "description": "Optional ConfigurationProfile values keyed by Parameter.name",
+      "additionalProperties": {
+        "type": ["string", "integer", "number", "boolean"]
+      }
+    }
+  }
+}

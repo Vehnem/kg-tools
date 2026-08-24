@@ -9,13 +9,14 @@ import jsonschema
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+from kgpipe_catalog import TEST_SCHEMA_PATH, iter_kgpipe_test_files, load_test_case  # noqa: E402
+
 SCHEMA_PATH = REPO_ROOT / "catalog" / "schema" / "tool.schema.json"
 TOOLS_DIR = REPO_ROOT / "tools"
-
-
-def load_schema():
-    with open(str(SCHEMA_PATH), encoding="utf-8") as f:
-        return json.load(f)
 
 
 def discover_manifests():
@@ -53,14 +54,46 @@ def validate_layout(tool_dir, manifest):
     return errors
 
 
-def main():
-    schema = load_schema()
+def make_validator(schema):
     if hasattr(jsonschema, "Draft7Validator"):
-        validator = jsonschema.Draft7Validator(schema)
-    elif hasattr(jsonschema, "Draft4Validator"):
-        validator = jsonschema.Draft4Validator(schema)
-    else:
-        validator = jsonschema.Validator(schema)
+        return jsonschema.Draft7Validator(schema)
+    if hasattr(jsonschema, "Draft4Validator"):
+        return jsonschema.Draft4Validator(schema)
+    return jsonschema.Validator(schema)
+
+
+def validate_kgpipe_tests(errors):
+    if not TEST_SCHEMA_PATH.is_file():
+        return
+    with open(str(TEST_SCHEMA_PATH), encoding="utf-8") as f:
+        schema = json.load(f)
+    validator = make_validator(schema)
+    for path in iter_kgpipe_test_files():
+        with open(str(path), encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        errors.extend(
+            "{}: {}: {}".format(
+                path, ".".join(str(p) for p in err.path) or "(root)", err.message
+            )
+            for err in validator.iter_errors(data)
+        )
+        case = load_test_case(path)
+        for slot, relative in case["inputs"].items():
+            source = path.parent / relative
+            if not source.is_file():
+                errors.append("{}: missing input '{}' file {}".format(path, slot, source))
+        for slot, relative in case["outputs"].items():
+            expected = path.parent / relative
+            if not expected.exists():
+                errors.append(
+                    "{}: missing output fixture '{}' path {}".format(path, slot, expected)
+                )
+
+
+def main():
+    with open(str(SCHEMA_PATH), encoding="utf-8") as f:
+        schema = json.load(f)
+    validator = make_validator(schema)
     manifests = discover_manifests()
 
     if not manifests:
@@ -76,6 +109,8 @@ def main():
             for err in validator.iter_errors(data)
         )
         errors.extend(validate_layout(path.parent, data))
+
+    validate_kgpipe_tests(errors)
 
     if errors:
         print("Catalog validation failed:", file=sys.stderr)
