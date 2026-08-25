@@ -8,4 +8,7 @@ description: Data integration and matching toolkit.
 ci:
   docker_build: false
   docker_test: false
+kgpipe:
+  task_refs:
+  - magellan_entity_matching
 id: magellan

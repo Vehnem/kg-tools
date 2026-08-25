@@ -1,11 +1,21 @@
 name: DeepMatcher
 kind:
-- python_package
+- docker_cli
 categories:
 - EntityResolution
 status: experimental
-description: Deep learning entity matching (documentation stub).
+description: Deep learning entity matching.
+execution:
+  docker:
+    image: kgt/deepmatcher
+    tag: latest
+    entrypoint:
+    - bash
+    - deepmatcher.sh
 ci:
   docker_build: false
   docker_test: false
+kgpipe:
+  task_refs:
+  - deepmatcher_entity_matching
 id: deepmatcher
