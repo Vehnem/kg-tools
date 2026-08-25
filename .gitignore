@@ -5,3 +5,7 @@ bin/
 binaries/
 .embs/
 __pycache__
+.pytest_cache/
+_site/
+.jekyll-cache/
+.jekyll-metadata

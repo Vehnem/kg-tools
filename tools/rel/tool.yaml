@@ -4,6 +4,7 @@ kind:
 categories:
 - EntityLinking
 status: experimental
+description: Radboud Entity Linker for entity linking and disambiguation.
 execution:
   docker:
     image: kgt/rel

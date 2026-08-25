@@ -1,0 +1,10 @@
+task: jedai_syntactic_matching
+description: Tiny two-record syntactic matching fixture for the pytest harness.
+inputs:
+  source: fixtures/source.csv
+  target: fixtures/target.csv
+outputs:
+  output: fixtures/expected.json
+config:
+  csv_separator: "|"
+  similarity_threshold: 0.5

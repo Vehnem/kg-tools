@@ -21,13 +21,15 @@ Living document for the catalog restructure (kg-tools only; KGpipe unchanged).
 
 - [x] Migrate remaining tools to `tools/<id>/`
 - [x] `_scripts/gen_ci.py` + `.github/workflows/docker-matrix.yml`
-- [x] `_scripts/gen_readme.py` for README catalog tables
+- [x] `_scripts/gen_readme.py` for `tools/README.md` catalog listings
 - [x] Update `_scripts/build` and `_scripts/test` for new layout
 - [ ] Optional: publish images to GHCR
 
 ## Phase 4 — Optional polish
 
-- [ ] `catalog/index.yaml` curated lists (featured, moviekg-set)
+- [x] `catalog/index.yaml` featured list rendered in `tools/README.md`
+- [ ] `catalog/index.yaml` moviekg-set
+- [x] GitHub Pages catalog (`docs/` + Just the Docs)
 - [ ] Fork-friendly docs in README
 - [ ] Remove legacy `_example/` after contributors adopt `_template`
 
@@ -40,4 +42,5 @@ Living document for the catalog restructure (kg-tools only; KGpipe unchanged).
 ```bash
 python _scripts/gen_ci.py
 python _scripts/gen_readme.py
+python _scripts/gen_pages.py
 ```
