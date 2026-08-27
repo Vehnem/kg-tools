@@ -1,0 +1,20 @@
+task: splink_entity_matching
+description: Tiny two-record entity matching fixture for the pytest harness.
+inputs:
+  source: fixtures/source.csv
+  target: fixtures/target.csv
+outputs:
+  output: fixtures/expected.json
+config:
+  raw_comparisons: |
+      - output_column_name: name
+        input_columns: [name]
+        comparison_type: jaro_winkler
+        params:
+          score_threshold_or_thresholds: [0.95, 0.9, 0.8]
+          term_frequency_adjustments: true
+  estimate_u_using_random_sampling_enabled: True,
+  estimate_u_max_pairs: 1000000,
+  estimate_parameters_using_em_enabled: True,
+  em_blocking_rule: "l.name = r.name",
+

@@ -1,0 +1,95 @@
+splink:
+  backend: duckdb
+  link_type: link_only
+  unique_id_column_name: id
+  source_dataset_column_name: source_dataset
+  probability_two_random_records_match: null
+  em_convergence: 0.0001
+  max_iterations: 25
+  retain_matching_columns: true
+  retain_intermediate_calculation_columns: false
+  additional_columns_to_retain: []
+  bayes_factor_column_prefix: bf_
+  term_frequency_adjustment_column_prefix: tf_
+  comparison_vector_value_column_prefix: gamma_
+
+  blocking_rules_to_generate_predictions:
+    - "l.\"paper year\" = r.\"paper year\" and substr(l.title,1,5) = substr(r.title,1,5)"
+    - "l.title = r.title"
+    - "substr(l.authors,1,10) = substr(r.authors,1,10) and l.\"paper year\" = r.\"paper year\""
+
+  comparisons:
+    - output_column_name: title
+      input_columns: [title]
+      comparison_type: jaro_winkler
+      params:
+        score_threshold_or_thresholds: [0.95, 0.9, 0.8]
+        term_frequency_adjustments: true
+
+    - output_column_name: authors
+      input_columns: [authors]
+      comparison_type: jaccard
+      params:
+        score_threshold_or_thresholds: [0.9, 0.7]
+        term_frequency_adjustments: true
+
+    - output_column_name: venue
+      input_columns: [venue]
+      comparison_type: jaro_winkler
+      params:
+        score_threshold_or_thresholds: [0.95, 0.85]
+        term_frequency_adjustments: true
+
+    - raw:
+        output_column_name: paper_year
+        comparison_levels:
+          - sql_condition: "\"paper year_l\" IS NULL OR \"paper year_r\" IS NULL"
+            label_for_charts: "Null"
+            is_null_level: true
+          - sql_condition: "\"paper year_l\" = \"paper year_r\""
+            label_for_charts: "Exact match"
+          - sql_condition: "levenshtein(CAST(\"paper year_l\" AS VARCHAR), CAST(\"paper year_r\" AS VARCHAR)) <= 1"
+            label_for_charts: "Levenshtein <= 1"
+          - sql_condition: "ELSE"
+            label_for_charts: "All other comparisons"
+
+  term_frequency_adjustments:
+    columns:
+      - title
+      - authors
+      - venue
+
+  training:
+    estimate_probability_two_random_records_match:
+      deterministic_matching_rules:
+        - "l.title = r.title and l.\"paper year\" = r.\"paper year\""
+        - "l.title = r.title and l.authors = r.authors"
+      recall: 0.9
+
+    estimate_u_using_random_sampling:
+      max_pairs: 1000000
+      seed: 42
+
+    estimate_parameters_using_expectation_maximisation:
+      - blocking_rule: "l.title = r.title"
+        estimate_without_term_frequencies: false
+        fix_probability_two_random_records_match: false
+        fix_m_probabilities: false
+        fix_u_probabilities: false
+      - blocking_rule: "l.\"paper year\" = r.\"paper year\""
+        estimate_without_term_frequencies: false
+        fix_probability_two_random_records_match: false
+        fix_m_probabilities: false
+        fix_u_probabilities: false
+      - blocking_rule: "substr(l.authors,1,10) = substr(r.authors,1,10)"
+        estimate_without_term_frequencies: false
+        fix_probability_two_random_records_match: false
+        fix_m_probabilities: false
+        fix_u_probabilities: false
+
+  output:
+    threshold_match_probability: 0.9
+    threshold_match_weight: null
+    clustering:
+      enabled: false
+      threshold_match_probability: 0.95
