@@ -1,0 +1,2 @@
+ontoaligner>=1.9.2
+pyyaml>=6.0

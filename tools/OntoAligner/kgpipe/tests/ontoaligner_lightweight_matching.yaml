@@ -1,0 +1,12 @@
+task: ontoaligner_lightweight_matching
+description: Tiny lightweight matching fixture for the pytest harness.
+inputs:
+  source: fixtures/source.owl
+  target: fixtures/target.owl
+outputs:
+  output: fixtures/expected.json
+config:
+  method: "lightweight"
+  lightweight:
+    matcher: "simple_fuzzy"
+    fuzzy_sm_threshold: 0.2

@@ -1,0 +1,68 @@
+
+input:
+  source_ontology_path: "data/source.owl"
+  target_ontology_path: "data/target.owl"
+  reference_matching_path: ""
+  task_class: "generic"
+
+output:
+  output_dir: "results"
+  output_format: "xml"
+  output_file_name: "matchings"
+  save_matchings: true
+  return_matching: true
+  evaluate: false
+
+method: "lightweight"
+
+encoder:
+  name: "concept"
+
+
+lightweight:
+  matcher: "simple_fuzzy"
+  fuzzy_sm_threshold: 0.2
+
+retrieval:
+  matcher: "sbert"
+  retriever_path: "sentence-transformers/all-MiniLM-L6-v2"
+  device: "cpu"
+  top_k: 10
+  ir_threshold: 0.5
+  openai_key: ""
+
+llm:
+  matcher: "auto_decoder"
+  llm_path: "Qwen/Qwen2.5-0.5B-Instruct"
+  dataset: "concept"
+  device: "cpu"
+  batch_size: 8
+  max_length: 300
+  max_new_tokens: 10
+  llm_threshold: 0.5
+  llm_mapper_interested_class: "yes"
+  answer_set:
+    yes: ["yes", "true"]
+    no: ["no", "false"]
+  huggingface_access_token: ""
+  openai_key: ""
+
+rag:
+  matcher: "mistral_bert"
+  retriever_path: "sentence-transformers/all-MiniLM-L6-v2"
+  llm_path: "mistralai/Mistral-7B-Instruct-v0.2"
+  device: "cpu"
+  batch_size: 8
+  max_length: 300
+  max_new_tokens: 10
+  top_k: 10
+  ir_rag_threshold: 0.7
+  llm_threshold: 0.5
+  device_map: "auto"
+  huggingface_access_token: ""
+  openai_key: ""
+  answer_set:
+    yes: ["yes", "true"]
+    no: ["no", "false"]
+  n_shots: 5
+  positive_ratio: 0.7

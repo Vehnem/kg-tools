@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns="http://example.org/onto-b#"
+         xml:base="http://example.org/onto-b">
+
+  <owl:Ontology rdf:about="http://example.org/onto-b"/>
+
+  <owl:Class rdf:about="http://example.org/onto-b#Human">
+    <rdfs:label>Human</rdfs:label>
+  </owl:Class>
+
+  <owl:Class rdf:about="http://example.org/onto-b#Automobile">
+    <rdfs:label>Automobile</rdfs:label>
+  </owl:Class>
+
+  <owl:Class rdf:about="http://example.org/onto-b#PassengerCar">
+    <rdfs:label>Passenger Car</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://example.org/onto-b#Automobile"/>
+  </owl:Class>
+
+  <owl:Class rdf:about="http://example.org/onto-b#Organization">
+    <rdfs:label>Organization</rdfs:label>
+  </owl:Class>
+
+  <owl:ObjectProperty rdf:about="http://example.org/onto-b#hasOwner">
+    <rdfs:label>has owner</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/onto-b#Automobile"/>
+    <rdfs:range rdf:resource="http://example.org/onto-b#Human"/>
+  </owl:ObjectProperty>
+
+</rdf:RDF>

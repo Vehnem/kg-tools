@@ -1,0 +1,25 @@
+name: PyJedAI
+kind:
+- docker_cli
+categories:
+- EntityResolution
+status: maintained
+description: Entity resolution toolkit (Python JedAI).
+upstream:
+  url: https://github.com/AI-team-UoA/pyJedAI
+  license: Apache-2.0
+execution:
+  docker:
+    image: kgt/pyjedai
+    tag: latest
+    entrypoint:
+    - bash
+    - pyjedai.sh
+ci:
+  docker_build: true
+  docker_test: true
+kgpipe:
+  task_refs:
+  - pyjedai_entity_matching
+  - pyjedai_entity_matching_v2
+id: pyjedai
