@@ -1,0 +1,63 @@
+mode: match
+
+task:
+  name: "AbtBuy"
+  task_type: classification
+  vocab: ["0", "1"]
+  trainset: "data/er_magellan/Textual/Abt-Buy/train.txt"  # relativ zu paths.ditto_repo
+  validset: "data/er_magellan/Textual/Abt-Buy/valid.txt"  # relativ zu paths.ditto_repo
+  testset: "data/er_magellan/Textual/Abt-Buy/test.txt"    # relativ zu paths.ditto_repo
+
+paths:
+  ditto_repo: "../bin/ditto"                 # local clone of megagonlabs/ditto
+  checkpoint_path: "checkpoints/"       # --checkpoint_path (match) / --logdir (train)
+  input_path: "../bin/ditto/input/input_small.jsonl"  # --input_path (match mode, fallback)
+  output_path: "output/matched.jsonl"   # --output_path (match mode, fallback)
+
+model:
+  lm: distilbert
+  max_len: 128
+  use_gpu: false
+  fp16: false
+
+training:
+  run_id: 0
+  batch_size: 16
+  lr: 3.0e-5
+  n_epochs: 10
+  finetuning: true
+  save_model: true
+  logdir: "checkpoints/"
+  size: null
+
+optimizations:
+  data_augmentation:
+    enabled: false
+    operator: del
+    alpha_aug: 0.8
+  domain_knowledge:
+    enabled: false
+    mode: general
+  summarization:
+    enabled: false
+
+runtime:
+  python_bin: "python"
+  cuda_visible_devices: "0"
+
+blocking:
+  train:
+    train_fn: "../data/er_magellan/Structured/Beer/train.txt"
+    valid_fn: "../data/er_magellan/Structured/Beer/valid.txt"
+    model_fn: "model.pth"
+    batch_size: 16
+    n_epochs: 10
+    lm: bert
+    fp16: false
+  apply:
+    input_path: "input/"
+    left_fn: "table_a.txt"
+    right_fn: "table_b.txt"
+    output_fn: "candidates.jsonl"
+    model_fn: "model.pth"
+    k: 10

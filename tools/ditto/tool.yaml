@@ -1,0 +1,21 @@
+name: Ditto
+kind:
+  - python_package
+categories:
+  - EntityResolution
+status: experimental
+description: Deep learning model for entity matching and record linkage.
+execution:
+  docker:
+    image: kgt/ditto
+    tag: latest
+    entrypoint:
+    - bash
+    - ditto.sh
+ci:
+  docker_build: false
+  docker_test: false
+kgpipe:
+  task_refs:
+  - ditto_entity_matching
+id: ditto
