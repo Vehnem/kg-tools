@@ -28,21 +28,15 @@ included in the KGpipe configuration even though it is not passed directly
 to DeepMatcher.
 """
 
-from kgpipe.common import (
-    KgTask,
-    TaskInput,
-    TaskOutput,
-    BasicDataFormats,
-    BasicTaskCategoryCatalog,
-    Registry,
-)
-from kgpipe.common.model.configuration import (
-    ConfigurationDefinition,
-    Parameter,
-    ParameterType,
-    ConfigurationProfile,
-)
+import tempfile
+from pathlib import Path
 
+import yaml
+from kgpipe.common import Data
+from kgpipe.common import KgTask, TaskInput, TaskOutput, BasicDataFormats, BasicTaskCategoryCatalog, Registry
+from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_container
+from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
+from kgpipe.execution import docker_client
 
 # ---------------------------------------------------------------------------
 # Input / output
@@ -514,66 +508,64 @@ deepmatcher_entity_matching_config = ConfigurationDefinition(
 )
 
 
-# ---------------------------------------------------------------------------
-# Task implementation
-# ---------------------------------------------------------------------------
+def _build_deepmatcher_config(config: ConfigurationProfile) -> str:
+    sections: dict[str, dict] = {}
+    for param in _deepmatcher_parameters():
+        value = config.get_parameter_value(param.name)
+
+        section, key = param.native_keys[0].split(".", 1)
+
+        if value == "null":
+            value = None
+
+        if key == "ignore_columns":
+            if isinstance(value, str):
+                cols = [c.strip() for c in value.split(",") if c.strip()]
+            else:
+                cols = list(value or [])
+            value = cols if (cols or section == "process") else None
+
+        sections.setdefault(section, {})[key] = value
+
+    return yaml.safe_dump(sections, sort_keys=False, default_flow_style=False)
+
 
 def deepmatcher_entity_matching(
     inputs: TaskInput,
     outputs: TaskOutput,
     config: ConfigurationProfile,
 ):
-    """Run the DeepMatcher shell wrapper.
+    with tempfile.TemporaryDirectory(prefix="deepmatcher_") as tmp:
+        config_host_path = Path(tmp) / "config.yaml"
+        config_host_path.write_text(_build_deepmatcher_config(config), encoding="utf-8")
 
-    The actual command is:
+        config_data = Data(str(config_host_path), BasicDataFormats.ANY)
 
-        bash deepmatcher.sh \
-            <data_dir> \
-            <train.csv> \
-            <validation.csv> \
-            <test.csv> \
-            <best_model.pth> \
-            <unlabeled.csv> \
-            <output.csv> \
-            [<config.yaml>]
+        all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
+        volumes, host_to_container = get_docker_volume_bindings(all_data)
 
-    The configuration profile is expected to be serialized to a YAML file
-    before invoking the wrapper.
-    """
+        def remap(data):
+            return str(remap_data_path_for_container(data, host_to_container).path)
 
-    # TODO:
-    # 1. Resolve the input/output paths from TaskInput/TaskOutput.
-    # 2. Serialize `config` to the DeepMatcher YAML structure:
-    #
-    #       process:
-    #         ...
-    #       process_unlabeled:
-    #         ...
-    #       model:
-    #         ...
-    #       train:
-    #         ...
-    #       eval:
-    #         ...
-    #       prediction:
-    #         ...
-    #       threshold:
-    #         ...
-    #
-    # 3. Invoke:
-    #
-    #       bash deepmatcher.sh \
-    #           data_dir \
-    #           train.csv \
-    #           validation.csv \
-    #           test.csv \
-    #           best_model.pth \
-    #           unlabeled.csv \
-    #           output.csv \
-    #           config.yaml
-    #
-    # 4. Return the generated model and prediction output.
+        command = [
+            "bash", "deepmatcher.sh",
+            remap(inputs["data_dir"]),
+            remap(inputs["train"]),
+            remap(inputs["validation"]),
+            remap(inputs["test"]),
+            remap(outputs["model"]),
+            remap(inputs["unlabeled"]),
+            remap(outputs["prediction"]),
+            remap(config_data),
+        ]
 
+        client = docker_client(
+            image="kgt/deepmatcher:latest",
+            command=command,
+            volumes=volumes,
+        )
+
+        result = client()
 
 deepmatcher_entity_matching_task = KgTask(
     name="deepmatcher_entity_matching",

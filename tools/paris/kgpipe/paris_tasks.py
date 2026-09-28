@@ -21,21 +21,13 @@ The fact-store paths and output directory are supplied by KGpipe and
 override the corresponding values from settings.ini.
 """
 
-from kgpipe.common import (
-    KgTask,
-    TaskInput,
-    TaskOutput,
-    BasicDataFormats,
-    BasicTaskCategoryCatalog,
-    Registry,
-)
-from kgpipe.common.model.configuration import (
-    ConfigurationDefinition,
-    Parameter,
-    ParameterType,
-    ConfigurationProfile,
-)
+import tempfile
+from pathlib import Path
 
+from kgpipe.common import Data, KgTask, TaskInput, TaskOutput, BasicDataFormats, BasicTaskCategoryCatalog, Registry
+from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_container
+from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
+from kgpipe.execution import docker_client
 
 _PARIS_INPUT_SPEC = {
     "source": BasicDataFormats.RDF,
@@ -411,13 +403,57 @@ paris_entity_matching_config = ConfigurationDefinition(
 )
 
 
+def _ini_value(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+def _build_paris_settings(config: ConfigurationProfile) -> str:
+    lines = []
+    for param in _paris_parameters():
+        value = config.get_parameter_value(param.name)
+        if value is None:
+            continue
+        lines.append(f"{param.native_keys[0]}={_ini_value(value)}")
+    return "\n".join(lines) + "\n"
+
+
 def paris_entity_matching(
     inputs: TaskInput,
     outputs: TaskOutput,
     config: ConfigurationProfile,
 ):
-    pass  # TODO: generate settings.ini and run PARIS wrapper
+    Path(outputs["output"].path).mkdir(parents=True, exist_ok=True)
 
+    with tempfile.TemporaryDirectory(prefix="paris_") as tmp:
+        config_host_path = Path(tmp) / "settings.ini"
+        config_host_path.write_text(_build_paris_settings(config), encoding="utf-8")
+
+        config_data = Data(str(config_host_path), BasicDataFormats.ANY)
+
+        all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
+        volumes, host_to_container = get_docker_volume_bindings(all_data)
+
+        source_path = remap_data_path_for_container(inputs["source"], host_to_container)
+        target_path = remap_data_path_for_container(inputs["target"], host_to_container)
+        output_path = remap_data_path_for_container(outputs["output"], host_to_container)
+        config_container_path = remap_data_path_for_container(config_data, host_to_container)
+
+        command = [
+            "bash", "paris.sh",
+            str(config_container_path.path),
+            str(source_path.path),
+            str(target_path.path),
+            str(output_path.path),
+        ]
+
+        client = docker_client(
+            image="kgt/paris:latest",
+            command=command,
+            volumes=volumes,
+        )
+
+        result = client()
 
 paris_entity_matching_task = KgTask(
     name="paris_entity_matching",

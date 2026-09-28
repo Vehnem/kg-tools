@@ -11,8 +11,13 @@ between automatic matching, manual configuration, and repair of an existing
 alignment.
 """
 
-from kgpipe.common import KgTask, TaskInput, TaskOutput, BasicDataFormats, BasicTaskCategoryCatalog, Registry
+import tempfile
+from pathlib import Path
+
+from kgpipe.common import Data, KgTask, TaskInput, TaskOutput, BasicDataFormats, BasicTaskCategoryCatalog, Registry
+from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_container
 from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
+from kgpipe.execution import docker_client
 
 _AGREEMENTMAKER_OM_INPUT_SPEC = {"source": BasicDataFormats.RDF, "target": BasicDataFormats.OWL}
 _AGREEMENTMAKER_OM_OUTPUT_SPEC = {"output": BasicDataFormats.RDF}
@@ -123,9 +128,55 @@ agreementmaker_ontology_matching_config = ConfigurationDefinition(
 )
 
 
-def agreementmaker_ontology_matching(inputs: TaskInput, outputs: TaskOutput, config: ConfigurationProfile):
-    pass  # TODO: generate matcher yaml and run Docker wrapper
+def _ini_value(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
 
+
+def _build_settings(config: ConfigurationProfile) -> str:
+    lines = []
+    for param in _matching_parameters():
+        value = config.get_parameter_value(param.name)
+        allowed = getattr(param, "allowed_values", None)
+        if allowed and _ini_value(value) not in allowed:
+            raise ValueError(
+                f"Invalid value {value!r} for '{param.name}', allowed: {allowed}"
+            )
+        lines.append(f"{param.name}={_ini_value(value)}")
+    return "\n".join(lines) + "\n"
+
+
+def agreementmaker_ontology_matching(inputs: TaskInput, outputs: TaskOutput, config: ConfigurationProfile):
+    with tempfile.TemporaryDirectory(prefix="agreementmaker_") as tmp:
+        config_host_path = Path(tmp) / "settings.ini"
+        config_host_path.write_text(_build_settings(config), encoding="utf-8")
+
+        config_data = Data(str(config_host_path), BasicDataFormats.ANY)
+
+        all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
+        volumes, host_to_container = get_docker_volume_bindings(all_data)
+
+        source_path = remap_data_path_for_container(inputs["source"], host_to_container)
+        target_path = remap_data_path_for_container(inputs["target"], host_to_container)
+        output_path = remap_data_path_for_container(outputs["output"], host_to_container)
+        config_container_path = remap_data_path_for_container(config_data, host_to_container)
+
+        command = [
+            "bash", "agreementmaker.sh",
+            str(config_container_path.path),
+            str(source_path.path),
+            str(target_path.path),
+            str(output_path.path),
+        ]
+
+        client = docker_client(
+            image="kgt/agreementmaker:latest",
+            command=command,
+            volumes=volumes,
+        )
+
+        result = client()
 
 agreementmaker_ontology_matching_task = KgTask(
     name="agreementmaker_ontology_matching",

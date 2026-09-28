@@ -20,21 +20,15 @@ not part of this task because it requires a GUI and is not suitable for
 the headless KGpipe execution model.
 """
 
-from kgpipe.common import (
-    KgTask,
-    TaskInput,
-    TaskOutput,
-    BasicDataFormats,
-    BasicTaskCategoryCatalog,
-    Registry,
-)
-from kgpipe.common.model.configuration import (
-    ConfigurationDefinition,
-    Parameter,
-    ParameterType,
-    ConfigurationProfile,
-)
+import tempfile
+from pathlib import Path
 
+import yaml
+from kgpipe.common import Data
+from kgpipe.common import KgTask, TaskInput, TaskOutput, BasicDataFormats, BasicTaskCategoryCatalog, Registry
+from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_container
+from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
+from kgpipe.execution import docker_client
 
 _MAGELLAN_INPUT_SPEC = {
     "input": BasicDataFormats.CSV,
@@ -335,13 +329,100 @@ magellan_entity_matching_config = ConfigurationDefinition(
 )
 
 
+_MAGELLAN_STRUCT_KEYS = {"blockers", "matchers", "blackbox_features"}
+_MAGELLAN_LIST_KEYS = {
+    "select_features",
+    "attrs_before",
+    "attrs_after",
+    "matcher_selection_candidates",
+    "matcher_selection_metrics",
+}
+
+
+def _parse_struct(value):
+    if isinstance(value, str):
+        return yaml.safe_load(value) if value.strip() else None
+    return value
+
+
+def _parse_list(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if not value.strip():
+            return None
+        parsed = yaml.safe_load(value)
+        if isinstance(parsed, list):
+            return parsed
+        return [c.strip() for c in value.split(",") if c.strip()]
+    return list(value)
+
+
+def _build_magellan_config(config: ConfigurationProfile) -> str:
+    sections: dict[str, dict] = {}
+    for param in _magellan_parameters():
+        value = config.get_parameter_value(param.name)
+        native_key = param.native_keys[0]
+
+        if param.name in _MAGELLAN_STRUCT_KEYS:
+            value = _parse_struct(value)
+            if param.name == "blackbox_features" and value is None:
+                value = []
+        elif param.name in _MAGELLAN_LIST_KEYS:
+            value = _parse_list(value)
+
+        section, key = native_key.split(".", 1)
+        sections.setdefault(section, {})[key] = value
+
+    blockers = sections["blocking"]["blockers"]
+    matchers = sections["matching"]["matchers"]
+    if not isinstance(blockers, list) or not blockers:
+        raise ValueError("'blockers' must be a non-empty list of blocker definitions")
+    if not isinstance(matchers, dict) or not matchers:
+        raise ValueError("'matchers' must be a non-empty mapping of matcher definitions")
+
+    selection = sections["matcher_selection"]
+    if selection["enabled"]:
+        unknown = set(selection["candidates"] or []) - set(matchers)
+        if unknown:
+            raise ValueError(f"matcher_selection.candidates not in matchers: {sorted(unknown)}")
+
+    return yaml.safe_dump(sections, sort_keys=False, default_flow_style=False)
+
+
 def magellan_entity_matching(
     inputs: TaskInput,
     outputs: TaskOutput,
     config: ConfigurationProfile,
 ):
-    pass  # TODO: generate Magellan configuration and run wrapper
+    Path(outputs["output"].path).mkdir(parents=True, exist_ok=True)
 
+    with tempfile.TemporaryDirectory(prefix="magellan_") as tmp:
+        config_host_path = Path(tmp) / "config.yaml"
+        config_host_path.write_text(_build_magellan_config(config), encoding="utf-8")
+
+        config_data = Data(str(config_host_path), BasicDataFormats.ANY)
+
+        all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
+        volumes, host_to_container = get_docker_volume_bindings(all_data)
+
+        def remap(data):
+            return str(remap_data_path_for_container(data, host_to_container).path)
+
+        command = [
+            "bash", "magellan.sh",
+            remap(inputs["input"]),
+            remap(outputs["output"]),
+            remap(config_data),
+        ]
+
+        client = docker_client(
+            image="kgt/magellan:latest",
+            command=command,
+            volumes=volumes,
+        )
+
+        result = client()
 
 magellan_entity_matching_task = KgTask(
     name="magellan_entity_matching",

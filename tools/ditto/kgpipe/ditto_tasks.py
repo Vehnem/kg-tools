@@ -12,21 +12,15 @@ backbone and Ditto's optional optimizations:
 - data augmentation (training only)
 """
 
-from kgpipe.common import (
-    KgTask,
-    TaskInput,
-    TaskOutput,
-    BasicDataFormats,
-    BasicTaskCategoryCatalog,
-    Registry,
-)
-from kgpipe.common.model.configuration import (
-    ConfigurationDefinition,
-    Parameter,
-    ParameterType,
-    ConfigurationProfile,
-)
+import tempfile
+from pathlib import Path
 
+import yaml
+from kgpipe.common import Data
+from kgpipe.common import KgTask, TaskInput, TaskOutput, BasicDataFormats, BasicTaskCategoryCatalog, Registry
+from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_container
+from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
+from kgpipe.execution import docker_client
 
 # Ditto consumes candidate entity pairs in JSONL and produces
 # JSONL match predictions.
@@ -415,13 +409,58 @@ ditto_entity_matching_config = ConfigurationDefinition(
 )
 
 
+def _set_nested(tree: dict, dotted_key: str, value) -> None:
+    *parents, leaf = dotted_key.split(".")
+    node = tree
+    for part in parents:
+        node = node.setdefault(part, {})
+    node[leaf] = value
+
+
+def _build_ditto_config(config: ConfigurationProfile) -> str:
+    tree: dict = {}
+    for param in _ditto_parameters():
+        value = config.get_parameter_value(param.name)
+        native_key = param.native_keys[0]
+
+        _set_nested(tree, native_key, value)
+
+    return yaml.safe_dump(tree, sort_keys=False, default_flow_style=False)
+
+
 def ditto_entity_matching(
     inputs: TaskInput,
     outputs: TaskOutput,
     config: ConfigurationProfile,
 ):
-    pass  # TODO: generate Ditto configuration / CLI and run Docker wrapper
+    Path(outputs["output"].path).parent.mkdir(parents=True, exist_ok=True)
 
+    with tempfile.TemporaryDirectory(prefix="ditto_") as tmp:
+        config_host_path = Path(tmp) / "config.yaml"
+        config_host_path.write_text(_build_ditto_config(config), encoding="utf-8")
+
+        config_data = Data(str(config_host_path), BasicDataFormats.ANY)
+
+        all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
+        volumes, host_to_container = get_docker_volume_bindings(all_data)
+
+        def remap(data):
+            return str(remap_data_path_for_container(data, host_to_container).path)
+
+        command = [
+            "bash", "ditto.sh",
+            remap(inputs["input"]),
+            remap(outputs["output"]),
+            remap(config_data),
+        ]
+
+        client = docker_client(
+            image="kgt/ditto:latest",
+            command=command,
+            volumes=volumes,
+        )
+
+        result = client()
 
 ditto_entity_matching_task = KgTask(
     name="ditto_entity_matching",
