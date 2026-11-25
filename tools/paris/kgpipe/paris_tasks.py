@@ -35,7 +35,7 @@ _PARIS_INPUT_SPEC = {
 }
 
 _PARIS_OUTPUT_SPEC = {
-    "output": BasicDataFormats.TSV,
+    "output": BasicDataFormats.CSV #TSV,
 }
 
 
@@ -69,7 +69,7 @@ def _paris_parameters() -> list[Parameter]:
             name="n_threads",
             native_keys=["nThreads"],
             datatype=ParameterType.integer,
-            default_value=None,
+            #default_value=None,
             required=False,
         ),
 
@@ -97,14 +97,14 @@ def _paris_parameters() -> list[Parameter]:
             name="sum_join_length_limit",
             native_keys=["sumJoinLengthLimit"],
             datatype=ParameterType.integer,
-            default_value=None,
+            #default_value=None,
             required=False,
         ),
 
         Parameter(
             name="join_threshold",
             native_keys=["joinThreshold"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.1,
             required=False,
         ),
@@ -217,7 +217,7 @@ def _paris_parameters() -> list[Parameter]:
         Parameter(
             name="post_literal_distance_threshold",
             native_keys=["postLiteralDistanceThreshold"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.78,
             required=False,
         ),
@@ -225,7 +225,7 @@ def _paris_parameters() -> list[Parameter]:
         Parameter(
             name="penalize_approx_matches",
             native_keys=["penalizeApproxMatches"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=1.1,
             required=False,
         ),
@@ -297,7 +297,7 @@ def _paris_parameters() -> list[Parameter]:
         Parameter(
             name="smooth_numerator",
             native_keys=["smoothNumerator"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.0,
             required=False,
         ),
@@ -305,7 +305,7 @@ def _paris_parameters() -> list[Parameter]:
         Parameter(
             name="smooth_denominator",
             native_keys=["smoothDenominator"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=10.0,
             required=False,
         ),
@@ -313,7 +313,7 @@ def _paris_parameters() -> list[Parameter]:
         Parameter(
             name="smooth_numerator_sampling",
             native_keys=["smoothNumeratorSampling"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.0,
             required=False,
         ),
@@ -321,7 +321,7 @@ def _paris_parameters() -> list[Parameter]:
         Parameter(
             name="smooth_denominator_sampling",
             native_keys=["smoothDenominatorSampling"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=1.0,
             required=False,
         ),
@@ -374,7 +374,7 @@ def _paris_parameters() -> list[Parameter]:
             name="debug_entity",
             native_keys=["debugEntity"],
             datatype=ParameterType.string,
-            default_value=None,
+            #default_value=None,
             required=False,
         ),
 
@@ -396,8 +396,8 @@ def _paris_parameters() -> list[Parameter]:
     ]
 
 
-paris_entity_matching_config = ConfigurationDefinition(
-    name="paris_entity_matching",
+paris_ontology_matching_config = ConfigurationDefinition(
+    name="paris_ontology_matching",
     description="Knowledge-base alignment with PARIS",
     parameters=_paris_parameters(),
 )
@@ -411,14 +411,17 @@ def _ini_value(value) -> str:
 def _build_paris_settings(config: ConfigurationProfile) -> str:
     lines = []
     for param in _paris_parameters():
-        value = config.get_parameter_value(param.name)
+        try:
+            value = config.get_parameter_value(param.name)
+        except ValueError:
+            value = param.default_value
         if value is None:
             continue
         lines.append(f"{param.native_keys[0]}={_ini_value(value)}")
     return "\n".join(lines) + "\n"
 
 
-def paris_entity_matching(
+def paris_ontology_matching(
     inputs: TaskInput,
     outputs: TaskOutput,
     config: ConfigurationProfile,
@@ -455,19 +458,19 @@ def paris_entity_matching(
 
         result = client()
 
-paris_entity_matching_task = KgTask(
-    name="paris_entity_matching",
+paris_ontology_matching_task = KgTask(
+    name="paris_ontology_matching",
     description="Knowledge-base alignment with PARIS",
     input_spec=_PARIS_INPUT_SPEC,
     output_spec=_PARIS_OUTPUT_SPEC,
-    function=paris_entity_matching,
-    config_spec=paris_entity_matching_config,
+    function=paris_ontology_matching,
+    config_spec=paris_ontology_matching_config,
     category=[BasicTaskCategoryCatalog.ontology_matching],
     tools=["paris"],
 )
 
 
 Registry.add_task(
-    paris_entity_matching_task.name,
-    paris_entity_matching_task,
+    paris_ontology_matching_task.name,
+    paris_ontology_matching_task,
 )

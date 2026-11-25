@@ -1,0 +1,10 @@
+task: ditto_entity_matching_train
+description: Tiny ditto entity matching training fixture for the pytest harness.
+inputs:
+  train: fixtures/train.txt
+  valid: fixtures/valid.txt
+  test: fixtures/test.txt
+outputs:
+  output: fixtures/checkpoint.pt
+config:
+  task_name: 'AbtBuy'

@@ -19,7 +19,7 @@ from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_con
 from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
 from kgpipe.execution import docker_client
 
-_AGREEMENTMAKER_OM_INPUT_SPEC = {"source": BasicDataFormats.RDF, "target": BasicDataFormats.OWL}
+_AGREEMENTMAKER_OM_INPUT_SPEC = {"source": BasicDataFormats.RDF, "target": BasicDataFormats.RDF}
 _AGREEMENTMAKER_OM_OUTPUT_SPEC = {"output": BasicDataFormats.RDF}
 
 def _matching_parameters() -> list[Parameter]:
@@ -124,7 +124,7 @@ def _matching_parameters() -> list[Parameter]:
 agreementmaker_ontology_matching_config = ConfigurationDefinition(
     name="agreementmaker_ontology_matching",
     description="Ontology matching with AgreementMakerLight",
-    parameters=_matching_parameters,
+    parameters=_matching_parameters(),
 )
 
 
@@ -137,12 +137,10 @@ def _ini_value(value) -> str:
 def _build_settings(config: ConfigurationProfile) -> str:
     lines = []
     for param in _matching_parameters():
-        value = config.get_parameter_value(param.name)
-        allowed = getattr(param, "allowed_values", None)
-        if allowed and _ini_value(value) not in allowed:
-            raise ValueError(
-                f"Invalid value {value!r} for '{param.name}', allowed: {allowed}"
-            )
+        try:
+            value = config.get_parameter_value(param.name)
+        except ValueError:
+            value = param.default_value
         lines.append(f"{param.name}={_ini_value(value)}")
     return "\n".join(lines) + "\n"
 

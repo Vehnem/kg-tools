@@ -1,0 +1,8 @@
+task: ontoea_entity_alignment
+description: Tiny OntoEA entity alignment fixture for the pytest harness.
+inputs:
+  benchmark: fixtures/benchmark
+outputs:
+  output: fixtures/output
+config:
+  cuda_visible_devices: ''

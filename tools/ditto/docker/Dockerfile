@@ -56,5 +56,3 @@ COPY wrapper/ditto.sh .
 COPY config-example.yaml .
 
 RUN chmod +x ditto.sh
-
-ENTRYPOINT ["/bin/bash"]

@@ -1,0 +1,8 @@
+task: paris_ontology_matching
+description: Tiny two-record ontology matching fixture for the pytest harness.
+inputs:
+  source: fixtures/source.owl
+  target: fixtures/target.owl
+outputs:
+  output: fixtures/expected.json
+config:

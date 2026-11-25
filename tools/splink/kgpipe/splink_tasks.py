@@ -40,8 +40,8 @@ from kgpipe.execution import docker_client
 
 
 _SPLINK_ER_INPUT_SPEC = {
-    "input": BasicDataFormats.CSV,
-    "input2": BasicDataFormats.CSV,
+    "source": BasicDataFormats.CSV,
+    "target": BasicDataFormats.CSV,
 }
 
 _SPLINK_ER_OUTPUT_SPEC = {
@@ -954,7 +954,7 @@ def _run_splink_matching(
     volumes, host_to_container = get_docker_volume_bindings(all_data)
 
     input_path = remap_data_path_for_container(
-        inputs["input"],
+        inputs["source"],
         host_to_container,
     )
 
@@ -979,9 +979,9 @@ def _run_splink_matching(
         str(input_path.path),
     ]
 
-    if "input2" in inputs:
+    if "target" in inputs:
         input2_path = remap_data_path_for_container(
-            inputs["input2"],
+            inputs["target"],
             host_to_container,
         )
 

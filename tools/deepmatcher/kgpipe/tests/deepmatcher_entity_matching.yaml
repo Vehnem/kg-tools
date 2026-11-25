@@ -1,0 +1,12 @@
+task: deepmatcher_entity_matching
+description: Tiny deepmatcher entity matching fixture for the pytest harness.
+inputs:
+  data_dir: fixtures
+  train: test_train.csv
+  validation: test_valid.csv
+  test: test_test.csv
+  unlabeled: fixtures/test_unlabeled.csv
+  cache: fixtures/.vector_cache
+outputs:
+  prediction: fixtures/expected.json
+  model: fixtures/model.any

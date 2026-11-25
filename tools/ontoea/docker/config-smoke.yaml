@@ -1,0 +1,69 @@
+io:
+  dataset_division: 721_5fold/1/
+  ordered: true
+runtime:
+  cuda_visible_devices: ''
+  batch_threads_num: 4
+  test_threads_num: 8
+word_embeddings:
+  word_embed: ../../benchmarks/wiki-news-300d-1M.vec
+  use_word_embed_init: 0
+  use_word_embed_init_onto: 0
+  word_embed_init_zh: 0
+  use_alter_label: 0
+model:
+  embedding_module: OntoEA
+  alignment_module: mapping
+  ent_emb_loss: limit_loss
+  onto_training_method: hier
+  fusion_way: add
+  dim: 300
+  onto_dim: 300
+  init: unit
+  ent_l2_norm: true
+  rel_l2_norm: true
+  loss_norm: L2
+  alpha: 5.0
+  beta: 0.0
+  gamma: 1.0
+  sigma: 1.0
+ontology:
+  cvlink_module: null
+  check_version: 4
+  onto_neg_sampling: null
+  likelihood_vaild: true
+  onto_likelihood_epochs: 5
+  likelihood_slice: 10
+sampling:
+  neg_sampling: truncated
+  neg_triple_num: 10
+  truncated_epsilon: 0.9
+  alignment_neg_sampling: type_based
+  pos_margin: 0.01
+  neg_margin: 2.0
+  neg_margin_balance: 0.2
+training:
+  optimizer: Adagrad
+  learning_rate: 0.01
+  cv_link_lr: 0.001
+  likelihood_lr: 0.001
+  max_epoch: 2
+  sub_epoch: 2
+  align_sub_epoch: 1
+  batch_size: 4500
+  onto_batch_size: 64
+  cvlink_batch_size: 2000
+evaluation:
+  start_valid: 50
+  eval_freq: 10
+  stop_metric: hits1
+  eval_metric: inner
+  eval_norm: true
+  csls: 10
+  top_k:
+  - 1
+  - 5
+  - 10
+  - 50
+output:
+  keep_embeddings: true

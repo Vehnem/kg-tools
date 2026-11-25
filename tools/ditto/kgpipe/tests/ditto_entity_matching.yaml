@@ -1,0 +1,9 @@
+task: ditto_entity_matching
+description: Tiny ditto entity matching fixture for the pytest harness.
+inputs:
+  input: fixtures/input.jsonl
+  checkpoint: fixtures/checkpoint.pt
+outputs:
+  output: fixtures/output.jsonl
+config:
+  task_name: 'AbtBuy'

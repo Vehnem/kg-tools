@@ -15,6 +15,9 @@ Multiple blockers can be combined via union or chain. Matching supports
 classical machine-learning matchers as well as rule-based matching.
 
 The wrapper exposes the configuration supported by run_magellan.py.
+The left table, the right table and the (optional) labeled data are passed
+as separate task inputs ("ltable", "rtable", "labeled_data"); everything else
+is configured via the parameters below.
 Interactive candidate labeling via label_candidates.py is intentionally
 not part of this task because it requires a GUI and is not suitable for
 the headless KGpipe execution model.
@@ -31,7 +34,9 @@ from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter
 from kgpipe.execution import docker_client
 
 _MAGELLAN_INPUT_SPEC = {
-    "input": BasicDataFormats.CSV,
+    "ltable": BasicDataFormats.CSV,
+    "rtable": BasicDataFormats.CSV,
+    "labeled_data": BasicDataFormats.CSV,
 }
 
 _MAGELLAN_OUTPUT_SPEC = {
@@ -46,20 +51,6 @@ def _magellan_parameters() -> list[Parameter]:
         # ==================================================================
 
         Parameter(
-            name="ltable",
-            native_keys=["io.ltable"],
-            datatype=ParameterType.string,
-            required=True,
-        ),
-
-        Parameter(
-            name="rtable",
-            native_keys=["io.rtable"],
-            datatype=ParameterType.string,
-            required=True,
-        ),
-
-        Parameter(
             name="l_key",
             native_keys=["io.l_key"],
             datatype=ParameterType.string,
@@ -71,14 +62,6 @@ def _magellan_parameters() -> list[Parameter]:
             native_keys=["io.r_key"],
             datatype=ParameterType.string,
             required=True,
-        ),
-
-        Parameter(
-            name="labeled_data",
-            native_keys=["io.labeled_data"],
-            datatype=ParameterType.string,
-            default_value=None,
-            required=False,
         ),
 
         # ==================================================================
@@ -98,7 +81,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="blockers",
             native_keys=["blocking.blockers"],
             datatype=ParameterType.string,
-            default_value=None,
             required=True,
         ),
 
@@ -189,7 +171,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="select_features",
             native_keys=["feature_generation.select_features"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -197,7 +178,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="attrs_before",
             native_keys=["feature_generation.attrs_before"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -205,7 +185,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="attrs_after",
             native_keys=["feature_generation.attrs_after"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -213,7 +192,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="blackbox_features",
             native_keys=["feature_generation.blackbox_features"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -241,7 +219,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="matchers",
             native_keys=["matching.matchers"],
             datatype=ParameterType.string,
-            default_value=None,
             required=True,
         ),
 
@@ -261,7 +238,6 @@ def _magellan_parameters() -> list[Parameter]:
             name="matcher_selection_candidates",
             native_keys=["matcher_selection.candidates"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -296,7 +272,7 @@ def _magellan_parameters() -> list[Parameter]:
             name="matcher_selection_random_state",
             native_keys=["matcher_selection.random_state"],
             datatype=ParameterType.integer,
-            default_value=None,
+            #default_value=None,
             required=False,
         ),
 
@@ -361,7 +337,10 @@ def _parse_list(value):
 def _build_magellan_config(config: ConfigurationProfile) -> str:
     sections: dict[str, dict] = {}
     for param in _magellan_parameters():
-        value = config.get_parameter_value(param.name)
+        try:
+            value = config.get_parameter_value(param.name)
+        except (ValueError, KeyError):
+            value = param.default_value
         native_key = param.native_keys[0]
 
         if param.name in _MAGELLAN_STRUCT_KEYS:
@@ -403,6 +382,8 @@ def magellan_entity_matching(
 
         config_data = Data(str(config_host_path), BasicDataFormats.ANY)
 
+        labeled_data = inputs["labeled_data"] if "labeled_data" in inputs else None
+
         all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
         volumes, host_to_container = get_docker_volume_bindings(all_data)
 
@@ -411,10 +392,13 @@ def magellan_entity_matching(
 
         command = [
             "bash", "magellan.sh",
-            remap(inputs["input"]),
+            remap(inputs["ltable"]),
+            remap(inputs["rtable"]),
             remap(outputs["output"]),
             remap(config_data),
         ]
+        if labeled_data is not None:
+            command.append(remap(labeled_data))
 
         client = docker_client(
             image="kgt/magellan:latest",

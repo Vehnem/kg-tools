@@ -11,7 +11,7 @@ from kgpipe.execution import docker_client
 from kgpipe.common import Data
 
 _OA_INPUT_SPEC = {"source": BasicDataFormats.RDF, "target": BasicDataFormats.RDF}
-_OA_OUTPUT_SPEC = {"output": BasicDataFormats.XML}
+_OA_OUTPUT_SPEC = {"output": BasicDataFormats.RDF}
 
 _ENCODER_LIGHTWEIGHT_RETRIEVAL = ["concept", "concept_children", "concept_parent", "doc_concept", "mila"]
 _ENCODER_LLM_RAG = ["concept", "concept_children", "concept_parent"]
@@ -673,3 +673,70 @@ Registry.add_task(ontoaligner_lightweight_matching_task.name, ontoaligner_lightw
 Registry.add_task(ontoaligner_retrieval_matching_task.name, ontoaligner_retrieval_matching_task)
 Registry.add_task(ontoaligner_llm_matching_task.name, ontoaligner_llm_matching_task)
 Registry.add_task(ontoaligner_rag_matching_task.name, ontoaligner_rag_matching_task)
+
+
+import json
+import xml.etree.ElementTree as ET
+
+NS = {
+    "align": "http://knowledgeweb.semanticweb.org/heterogeneity/alignment",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+}
+RDF_RESOURCE = f"{{{NS['rdf']}}}resource"
+
+
+def alignment_rdf_to_json(inputs: TaskInput, outputs: TaskOutput, config: ConfigurationProfile) -> dict:
+    input = inputs["source"].path
+    output = outputs["output"].path
+    min_score = config.get_parameter_value("min_score")
+
+    root = ET.parse(input).getroot()
+    matches = []
+
+    for cell in root.iterfind(".//align:map/align:Cell", NS):
+        e1 = cell.find("align:entity1", NS)
+        e2 = cell.find("align:entity2", NS)
+        measure = cell.find("align:measure", NS)
+        if e1 is None or e2 is None or measure is None:
+            continue
+
+        score = float(measure.text.strip())
+        if score < min_score:
+            continue
+
+        matches.append({
+            "id_1": e1.get(RDF_RESOURCE),
+            "id_2": e2.get(RDF_RESOURCE),
+            "score": score,
+            "id_type": "entity",
+        })
+
+    with open(output, "w", encoding="utf8") as f:
+        json.dump(
+            {"matches": matches, "blocks": [], "clusters": []},
+            f,
+            indent=4,
+            ensure_ascii=False,
+        )
+
+alignment_rdf_to_er_json = KgTask(
+    name="alignment_rdf_to_er_json",
+    description="Converts Alignment RDF to ER JSON",
+    input_spec={"source": BasicDataFormats.RDF},
+    output_spec={"output": BasicDataFormats.ER_JSON},
+    function=alignment_rdf_to_json,
+    category=[BasicTaskCategoryCatalog.data_mapping],
+    config_spec=ConfigurationDefinition(
+        name="alignment_rdf_to_er_json",
+        description="Converts Alignment RDF to ER JSON",
+        parameters=[Parameter(
+            name="min_score",
+            native_keys=["output.min_score"],
+            datatype=ParameterType.number,
+            required=False,
+            default_value=0.0
+        ),],
+)
+)
+
+Registry.add_task(alignment_rdf_to_er_json.name, alignment_rdf_to_er_json)

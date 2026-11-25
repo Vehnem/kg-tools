@@ -220,10 +220,13 @@ if __name__ == "__main__":
     parser.add_argument("--unlabeled_csv", required=True, help="CSV file containing unlabeled data")
     parser.add_argument("--output", required=True, help="Path to output csv")
     parser.add_argument("--config",required=False,default=None,help="Path to deepmatcher config yaml/json")
+    parser.add_argument("--emb_cache",required=False,default=None,help="Path to Embeddings Cache")
 
     args = parser.parse_args()
 
     cfg = DEFAULT_CONFIG
+    if args.emb_cache:
+        cfg["process"]["embeddings_cache_path"] = args.emb_cache
     if args.config:
         cfg = deep_merge(DEFAULT_CONFIG, load_config(args.config))
 

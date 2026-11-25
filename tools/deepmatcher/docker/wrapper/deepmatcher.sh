@@ -1,10 +1,10 @@
 #!/bin/bash
 # Usage:
 #   bash deepmatcher.sh path/to/data_dir train.csv validation.csv test.csv \
-#       path/to/best_model.pth path/to/unlabeled.csv path/to/output.csv [path/to/config.yaml]
+#       path/to/best_model.pth path/to/unlabeled.csv path/to/output.csv [path/to/embeddings_cache] [path/to/config.yaml]
 
 if [ "$#" -lt 6 ]; then
-  echo "Usage: bash deepmatcher.sh <data_dir> <train.csv> <validation.csv> <test.csv> <best_model.pth> <unlabeled.csv> <output.csv> [config.yaml]" >&2
+  echo "Usage: bash deepmatcher.sh <data_dir> <train.csv> <validation.csv> <test.csv> <best_model.pth> <unlabeled.csv> <output.csv> [path/to/embeddings_cache] [config.yaml]" >&2
   exit 1
 fi
 
@@ -15,7 +15,8 @@ TEST=$4
 BEST_MODEL=$5
 UNLABELED=$6
 OUTPUT=$7
-CONFIG=${8:-}
+EMB_CACHE=${8:-}
+CONFIG=${9:-}
 
 CMD=(
   python run_deepmatcher.py
@@ -27,6 +28,10 @@ CMD=(
   --unlabeled_csv "$UNLABELED"
   --output "$OUTPUT"
 )
+
+if [ -n "$EMB_CACHE" ]; then
+  CMD+=(--emb_cache "$EMB_CACHE")
+fi
 
 if [ -n "$CONFIG" ]; then
   CMD+=(--config "$CONFIG")

@@ -1,0 +1,7 @@
+task: agreementmaker_ontology_matching
+description: Tiny agreementmaker ontology matching fixture for the pytest harness.
+inputs:
+  source: fixtures/memory-alpha-dump.xml
+  target: fixtures/star-trek-expanded-universe-dump.xml
+outputs:
+  output: fixtures/expected.json

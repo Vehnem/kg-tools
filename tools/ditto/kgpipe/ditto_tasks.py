@@ -22,14 +22,28 @@ from kgpipe.common.io import get_docker_volume_bindings, remap_data_path_for_con
 from kgpipe.common.model.configuration import ConfigurationDefinition, Parameter, ParameterType, ConfigurationProfile
 from kgpipe.execution import docker_client
 
-# Ditto consumes candidate entity pairs in JSONL and produces
-# JSONL match predictions.
+# Matching: Ditto consumes candidate entity pairs in JSONL and produces
+# JSONL match predictions. "checkpoint" is the checkpoint directory written
+# by the training task (its "output").
 _DITTO_INPUT_SPEC = {
     "input": BasicDataFormats.JSON,
+    "checkpoint": BasicDataFormats.ANY,
 }
 
 _DITTO_OUTPUT_SPEC = {
     "output": BasicDataFormats.JSON,
+}
+
+# Training: Ditto reads its train/valid/test files (tab-separated Ditto
+# format) and writes a checkpoint directory (<output>/<task.name>/model.pt).
+_DITTO_TRAIN_INPUT_SPEC = {
+    "train": BasicDataFormats.ANY,
+    "valid": BasicDataFormats.ANY,
+    "test": BasicDataFormats.ANY,
+}
+
+_DITTO_TRAIN_OUTPUT_SPEC = {
+    "output": BasicDataFormats.ANY,
 }
 
 
@@ -47,12 +61,56 @@ def _ditto_parameters() -> list[Parameter]:
             allowed_values=["match", "train"],
         ),
 
+        # ------------------------------------------------------------------
+        # Task (written to Ditto's configs.json by run_ditto.py)
+        # ------------------------------------------------------------------
         Parameter(
             name="task_name",
             native_keys=["task.name"],
             datatype=ParameterType.string,
-            default_value=None,
             required=True,
+        ),
+
+        Parameter(
+            name="task_type",
+            native_keys=["task.task_type"],
+            datatype=ParameterType.string,
+            default_value="classification",
+            required=False,
+            allowed_values=["classification"],
+        ),
+
+        # Label vocabulary, comma-separated (e.g. "0,1"); converted to a YAML
+        # list in _build_ditto_config().
+        Parameter(
+            name="vocab",
+            native_keys=["task.vocab"],
+            datatype=ParameterType.string,
+            default_value="0,1",
+            required=False,
+        ),
+
+        # trainset / validset / testset are relative to paths.ditto_repo.
+        # validset is also used by matcher.py to tune the decision threshold.
+        Parameter(
+            name="trainset",
+            native_keys=["task.trainset"],
+            datatype=ParameterType.string,
+            required=False,
+        ),
+
+        Parameter(
+            name="validset",
+            native_keys=["task.validset"],
+            datatype=ParameterType.string,
+            required=False,
+        ),
+
+        Parameter(
+            name="testset",
+            native_keys=["task.testset"],
+            datatype=ParameterType.string,
+            required=False,
         ),
 
         # ------------------------------------------------------------------
@@ -78,7 +136,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="input_path",
             native_keys=["paths.input_path"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -86,7 +143,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="output_path",
             native_keys=["paths.output_path"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -154,7 +210,7 @@ def _ditto_parameters() -> list[Parameter]:
         Parameter(
             name="lr",
             native_keys=["training.lr"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=3e-5,
             required=False,
         ),
@@ -195,7 +251,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="size",
             native_keys=["training.size"],
             datatype=ParameterType.integer,
-            default_value=None,
             required=False,
         ),
 
@@ -228,7 +283,7 @@ def _ditto_parameters() -> list[Parameter]:
         Parameter(
             name="alpha_aug",
             native_keys=["optimizations.data_augmentation.alpha_aug"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.8,
             required=False,
         ),
@@ -290,7 +345,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="blocking_train_fn",
             native_keys=["blocking.train.train_fn"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -298,7 +352,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="blocking_valid_fn",
             native_keys=["blocking.train.valid_fn"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -364,7 +417,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="blocking_apply_left_fn",
             native_keys=["blocking.apply.left_fn"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -372,7 +424,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="blocking_apply_right_fn",
             native_keys=["blocking.apply.right_fn"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -380,7 +431,6 @@ def _ditto_parameters() -> list[Parameter]:
             name="blocking_apply_output_fn",
             native_keys=["blocking.apply.output_fn"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
 
@@ -402,10 +452,43 @@ def _ditto_parameters() -> list[Parameter]:
     ]
 
 
+# Parameters that are not user-configurable per task: they are either fixed
+# by the task itself (mode), come from the task inputs/outputs (paths) or
+# only apply to the other mode. They are still written to the generated
+# config.yaml with their defaults, so the file keeps the full layout.
+_TRAIN_EXCLUDED = {
+    "mode",
+    "input_path", "output_path",           # matching only
+    "use_gpu",                             # matching only
+    "trainset", "validset", "testset",     # task inputs
+    "checkpoint_path", "logdir",           # task output
+}
+
+_MATCH_EXCLUDED = {
+    "mode",
+    "input_path", "output_path",           # task input / output
+    "checkpoint_path",                     # task input (checkpoint)
+    "trainset", "testset",                 # training only
+    "run_id", "batch_size", "lr", "n_epochs", "finetuning", "save_model",
+    "logdir", "size",                      # training only
+    "data_augmentation", "augmentation_operator", "alpha_aug",  # training only
+}
+
+
+def _params_without(excluded: set[str]) -> list[Parameter]:
+    return [p for p in _ditto_parameters() if p.name not in excluded]
+
+
+ditto_train_config = ConfigurationDefinition(
+    name="ditto_entity_matching_train",
+    description="Train a Ditto entity matching model",
+    parameters=_params_without(_TRAIN_EXCLUDED),
+)
+
 ditto_entity_matching_config = ConfigurationDefinition(
     name="ditto_entity_matching",
     description="Entity matching with Ditto",
-    parameters=_ditto_parameters(),
+    parameters=_params_without(_MATCH_EXCLUDED),
 )
 
 
@@ -417,28 +500,58 @@ def _set_nested(tree: dict, dotted_key: str, value) -> None:
     node[leaf] = value
 
 
-def _build_ditto_config(config: ConfigurationProfile) -> str:
+def _build_ditto_config(
+    config: ConfigurationProfile,
+    mode: str,
+    overrides: dict | None = None,
+) -> str:
     tree: dict = {}
     for param in _ditto_parameters():
-        value = config.get_parameter_value(param.name)
+        try:
+            value = config.get_parameter_value(param.name)
+        except (ValueError, KeyError):
+            value = param.default_value
         native_key = param.native_keys[0]
 
+        # task.vocab is a YAML list in the Ditto config, but a plain string
+        # parameter here.
+        if native_key == "task.vocab" and isinstance(value, str):
+            value = [v.strip() for v in value.split(",") if v.strip()]
+
+        _set_nested(tree, native_key, value)
+
+    # The mode is fixed by the task; overrides carry the container paths.
+    _set_nested(tree, "mode", mode)
+    for native_key, value in (overrides or {}).items():
         _set_nested(tree, native_key, value)
 
     return yaml.safe_dump(tree, sort_keys=False, default_flow_style=False)
 
 
-def ditto_entity_matching(
+def _run_ditto(
     inputs: TaskInput,
     outputs: TaskOutput,
     config: ConfigurationProfile,
+    *,
+    mode: str,
+    input_key: str | None,
+    overrides_fn,
+    output_is_dir: bool,
 ):
-    Path(outputs["output"].path).parent.mkdir(parents=True, exist_ok=True)
+    """Run ditto.sh in the Ditto container.
+
+    overrides_fn(remap) returns the config values (container paths) that
+    are written into the generated config.yaml.
+    input_key=None passes an empty string as the script's input argument.
+    """
+    out_path = Path(outputs["output"].path)
+    (out_path if output_is_dir else out_path.parent).mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory(prefix="ditto_") as tmp:
         config_host_path = Path(tmp) / "config.yaml"
-        config_host_path.write_text(_build_ditto_config(config), encoding="utf-8")
-
+        # Create the file first so it can be mounted; the content needs the
+        # container paths and is written after the volume bindings exist.
+        config_host_path.touch()
         config_data = Data(str(config_host_path), BasicDataFormats.ANY)
 
         all_data = list(inputs.values()) + list(outputs.values()) + [config_data]
@@ -447,9 +560,14 @@ def ditto_entity_matching(
         def remap(data):
             return str(remap_data_path_for_container(data, host_to_container).path)
 
+        config_host_path.write_text(
+            _build_ditto_config(config, mode, overrides_fn(remap)),
+            encoding="utf-8",
+        )
+
         command = [
             "bash", "ditto.sh",
-            remap(inputs["input"]),
+            remap(inputs[input_key]) if input_key else "",
             remap(outputs["output"]),
             remap(config_data),
         ]
@@ -462,6 +580,67 @@ def ditto_entity_matching(
 
         result = client()
 
+
+def ditto_entity_matching_train(
+    inputs: TaskInput,
+    outputs: TaskOutput,
+    config: ConfigurationProfile,
+):
+    def overrides(remap):
+        checkpoint_dir = remap(outputs["output"])
+        return {
+            "task.trainset": remap(inputs["train"]),
+            "task.validset": remap(inputs["valid"]),
+            "task.testset": remap(inputs["test"]),
+            # --logdir (train) / --checkpoint_path (match): the model ends up in
+            # <output>/<task.name>/model.pt
+            "paths.checkpoint_path": checkpoint_dir,
+            "training.logdir": checkpoint_dir,
+        }
+
+    _run_ditto(
+        inputs, outputs, config,
+        mode="train",
+        input_key=None,
+        overrides_fn=overrides,
+        output_is_dir=True,
+    )
+
+
+def ditto_entity_matching(
+    inputs: TaskInput,
+    outputs: TaskOutput,
+    config: ConfigurationProfile,
+):
+    def overrides(remap):
+        return {
+            "paths.input_path": remap(inputs["input"]),
+            "paths.output_path": remap(outputs["output"]),
+            # Output directory of the training task; matcher.py loads
+            # <checkpoint_path>/<task.name>/model.pt from it.
+            "paths.checkpoint_path": remap(inputs["checkpoint"]),
+        }
+
+    _run_ditto(
+        inputs, outputs, config,
+        mode="match",
+        input_key="input",
+        overrides_fn=overrides,
+        output_is_dir=False,
+    )
+
+
+ditto_entity_matching_train_task = KgTask(
+    name="ditto_entity_matching_train",
+    description="Train a Ditto entity matching model",
+    input_spec=_DITTO_TRAIN_INPUT_SPEC,
+    output_spec=_DITTO_TRAIN_OUTPUT_SPEC,
+    function=ditto_entity_matching_train,
+    config_spec=ditto_train_config,
+    category=[BasicTaskCategoryCatalog.entity_matching],
+    tools=["ditto"],
+)
+
 ditto_entity_matching_task = KgTask(
     name="ditto_entity_matching",
     description="Entity matching with Ditto",
@@ -473,6 +652,11 @@ ditto_entity_matching_task = KgTask(
     tools=["ditto"],
 )
 
+
+Registry.add_task(
+    ditto_entity_matching_train_task.name,
+    ditto_entity_matching_train_task,
+)
 
 Registry.add_task(
     ditto_entity_matching_task.name,

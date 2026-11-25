@@ -1,0 +1,11 @@
+task: logmap_ontology_matching
+description: Tiny logmap ontology matching fixture for the pytest harness.
+inputs:
+  ontology1: fixtures/source.owl
+  ontology2: fixtures/target.owl
+  reference: ''
+outputs:
+  output: fixtures/output.owl
+config:
+  java_xmx: '2G'
+  print_output: true

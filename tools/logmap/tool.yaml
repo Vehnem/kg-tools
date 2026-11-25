@@ -1,0 +1,14 @@
+name: LogMap
+kind:
+- java_package
+categories:
+- OntologyMatching
+status: experimental
+description: Scalable ontology matching and alignment repair system.
+ci:
+  docker_build: false
+  docker_test: false
+kgpipe:
+  task_refs:
+  - logmap_ontology_matching
+id: logmap

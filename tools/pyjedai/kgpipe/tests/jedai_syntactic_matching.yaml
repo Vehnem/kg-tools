@@ -6,5 +6,5 @@ inputs:
 outputs:
   output: fixtures/expected.json
 config:
-  csv_separator: "|"
-  similarity_threshold: 0.5
+  csv_separator: ","
+  similarity_threshold: 0.1

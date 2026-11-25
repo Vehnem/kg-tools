@@ -1,0 +1,7 @@
+task: valentine_schema_matching
+description: Tiny two-record schema matching fixture for the pytest harness.
+inputs:
+  source: fixtures/source.csv
+  target: fixtures/target.csv
+outputs:
+  output: fixtures/expected.json

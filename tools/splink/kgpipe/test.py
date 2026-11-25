@@ -6,7 +6,7 @@ import pytest
 from kgpipe.common import Data, DataFormat
 from kgpipe.common.model.configuration import ConfigurationProfile, ParameterBinding
 
-from splink_tasks import splink_entity_matching_task, splink_entity_matching_config
+from tools.splink.kgpipe.splink_tasks import splink_entity_matching_task, splink_entity_matching_config
 
 
 def _write_csv(path, header: list[str], rows: list[list[str]], sep: str = ",") -> None:

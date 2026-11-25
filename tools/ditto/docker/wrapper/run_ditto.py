@@ -19,10 +19,10 @@ Usage
                          --output output/matched.jsonl \
                          --config ditto_config.yaml
 
-    # Training mode (set mode: train in the config; --input/--output are
-    # not needed since train_ditto.py reads trainset/validset/testset from
-    # configs.json instead):
-    python run_ditto.py --config ditto_config.yaml
+    # Training mode (set mode: train in the config). --input is not needed
+    # (train_ditto.py reads trainset/validset/testset from configs.json), but
+    # --output is the destination for the trained checkpoint (model.pt):
+    python run_ditto.py --output output/model.pt --config ditto_config.yaml
 
 Requirements
 ------------
@@ -48,6 +48,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -208,6 +209,36 @@ def build_train_command(cfg: dict, python_bin: str) -> list[str]:
 
     return cmd
 
+def resolve_train_checkpoint(cfg: dict, ditto_repo: Path) -> Path:
+    """Where train_ditto.py writes the model: <logdir>/<task.name>/model.pt
+    (logdir is relative to the Ditto repo, since that is the subprocess cwd)."""
+    logdir = cfg.get("training", {}).get("logdir", cfg["paths"]["checkpoint_path"])
+    logdir_path = Path(logdir).expanduser()
+    if not logdir_path.is_absolute():
+        logdir_path = ditto_repo / logdir_path
+    return logdir_path / cfg["task"]["name"] / "model.pt"
+
+
+def copy_checkpoint(src: Path, output: str) -> Path:
+    """Copy the trained checkpoint to --output.
+
+    If --output is an existing directory or has no file suffix, it is treated
+    as a directory and the file is written to <output>/model.pt; otherwise
+    --output is used as the target file path.
+    """
+    if not src.is_file():
+        sys.exit(
+            f"Training finished, but no checkpoint was found at '{src}'. "
+            f"Ditto only saves a model when the dev F1 improves; also check "
+            f"that training.save_model is true."
+        )
+    dst = Path(output).expanduser()
+    if dst.is_dir() or not dst.suffix:
+        dst = dst / "model.pt"
+    dst = dst.resolve()
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+    return dst
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -245,6 +276,14 @@ def main() -> None:
             )
         cmd = build_match_command(cfg, input_path, output_path, python_bin)
     elif mode == "train":
+        output_path = args.output or cfg["paths"].get("output_path")
+        if not output_path:
+            sys.exit(
+                "mode: train requires --output (or paths.output_path in the config) "
+                "as the destination for the trained checkpoint."
+            )
+        if not cfg.get("training", {}).get("save_model", True):
+            sys.exit("mode: train with --output requires training.save_model: true.")
         cmd = build_train_command(cfg, python_bin)
     else:
         sys.exit(f"Unknown mode '{mode}' in config (expected 'match' or 'train').")
@@ -258,6 +297,12 @@ def main() -> None:
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_devices)
 
     result = subprocess.run(cmd, cwd=str(ditto_repo), env=env)
+
+    if result.returncode == 0 and mode == "train":
+        src = resolve_train_checkpoint(cfg, ditto_repo)
+        dst = copy_checkpoint(src, output_path)
+        print(f"Checkpoint : {src} -> {dst}")
+
     sys.exit(result.returncode)
 
 

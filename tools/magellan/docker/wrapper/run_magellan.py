@@ -4,13 +4,12 @@ run_magellan.py — config-driven entity-resolution pipeline on top of
 py_entitymatching (Magellan).
 
 Usage:
-    python run_magellan.py --input <input_dir> --output <output_dir> --config <config.yaml>
+    python run_magellan.py --ltable <ltable.csv> --rtable <rtable.csv> \\
+        --output <output_dir> --config <config.yaml> [--labeled-data <labels.csv>]
 
-Expected layout of --input (paths are relative to --input unless the config
-gives absolute paths, see CONFIG_REFERENCE.md, section "io"):
-    <input_dir>/<io.ltable>
-    <input_dir>/<io.rtable>
-    <input_dir>/<io.labeled_data>   (optional)
+--ltable and --rtable are the two tables to match, --labeled-data is optional
+(gold labels, required if ML matchers are used). The key columns of both
+tables are set via io.l_key / io.r_key in the config.
 
 All stages, their `method` values and `method_params` are documented in
 CONFIG_REFERENCE.md.
@@ -70,12 +69,6 @@ RULE_MATCHER_NAME = "rule_based"
 # Helpers
 # --------------------------------------------------------------------------
 
-def resolve_path(base_dir, path):
-    if path is None:
-        return None
-    return path if os.path.isabs(path) else os.path.join(base_dir, path)
-
-
 def load_config(config_path):
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -85,21 +78,26 @@ def load_config(config_path):
 # Stage: I/O
 # --------------------------------------------------------------------------
 
-def load_tables(cfg, input_dir):
-    io_cfg = cfg["io"]
-    l_path = resolve_path(input_dir, io_cfg["ltable"])
-    r_path = resolve_path(input_dir, io_cfg["rtable"])
+def _require_file(path, what):
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"{what} not found or not a file: {path}")
 
-    log.info("Reading ltable from %s", l_path)
-    ltable = em.read_csv_metadata(l_path, key=io_cfg["l_key"])
-    log.info("Reading rtable from %s", r_path)
-    rtable = em.read_csv_metadata(r_path, key=io_cfg["r_key"])
+
+def load_tables(cfg, ltable_path, rtable_path, labeled_data_path=None):
+    io_cfg = cfg["io"]
+
+    _require_file(ltable_path, "ltable")
+    _require_file(rtable_path, "rtable")
+
+    log.info("Reading ltable from %s", ltable_path)
+    ltable = em.read_csv_metadata(ltable_path, key=io_cfg["l_key"])
+    log.info("Reading rtable from %s", rtable_path)
+    rtable = em.read_csv_metadata(rtable_path, key=io_cfg["r_key"])
 
     labeled_data = None
-    if io_cfg.get("labeled_data"):
-        lab_path = resolve_path(input_dir, io_cfg["labeled_data"])
-        log.info("Reading labeled data from %s", lab_path)
-        labeled_data = pd.read_csv(lab_path)
+    if labeled_data_path and os.path.isfile(labeled_data_path):
+        log.info("Reading labeled data from %s", labeled_data_path)
+        labeled_data = pd.read_csv(labeled_data_path)
 
     return ltable, rtable, labeled_data
 
@@ -350,6 +348,11 @@ def _require_nonempty(df, stage_name, hint=""):
 def attach_labels(cfg, candset, labeled_data, ltable, rtable):
     label_cfg = cfg.get("labeling", {})
     strategy = label_cfg.get("strategy", "none")
+    if strategy == "none" and labeled_data is not None:
+        log.warning(
+            "--labeled-data was given but labeling.strategy is 'none'; "
+            "the labeled data is ignored. Set labeling.strategy: from_file to use it."
+        )
     if strategy == "none" or labeled_data is None:
         return candset, False
 
@@ -361,7 +364,7 @@ def attach_labels(cfg, candset, labeled_data, ltable, rtable):
 
     if label_column not in labeled_data.columns:
         raise ValueError(
-            f"labeling.label_column '{label_column}' not found in io.labeled_data "
+            f"labeling.label_column '{label_column}' not found in the labeled data "
             f"columns: {list(labeled_data.columns)}"
         )
 
@@ -375,7 +378,7 @@ def attach_labels(cfg, candset, labeled_data, ltable, rtable):
     r_src_col = _find_column(labeled_data, ["rtable_ID", "rtable_id", r_fk])
     if l_src_col is None or r_src_col is None:
         raise ValueError(
-            "io.labeled_data is missing the expected id columns. Looked for "
+            "The labeled data is missing the expected id columns. Looked for "
             f"one of ['ltable_ID', 'ltable_id', '{l_fk}'] and "
             f"['rtable_ID', 'rtable_id', '{r_fk}'], got columns: "
             f"{list(labeled_data.columns)}"
@@ -406,7 +409,7 @@ def attach_labels(cfg, candset, labeled_data, ltable, rtable):
         "Attaching labels to the candidate set",
         hint=(
             f"None of the {len(candset)} candidate pairs matched an "
-            f"({l_src_col!r}, {r_src_col!r}) pair in io.labeled_data "
+            f"({l_src_col!r}, {r_src_col!r}) pair in the labeled data "
             f"(matched against candidate set columns {l_fk!r}/{r_fk!r}). "
             "Check that the id values actually overlap and that blocking "
             "isn't discarding every true match."
@@ -493,7 +496,7 @@ def run_ml_matcher(name, matcher, m_cfg, feature_vecs, label_column, exclude_att
         raise ValueError(
             f"Matcher '{name}': only {len(feature_vecs)} labeled feature "
             "vector(s) available, need at least 2 to form a non-empty "
-            "train/test split. Check io.labeled_data and blocking recall."
+            "train/test split. Check the labeled data and blocking recall."
         )
 
     split = em.split_train_test(
@@ -597,7 +600,7 @@ def run_matching(cfg, candset, labeled, feature_table, output_dir):
     if any(m["method"] in ML_MATCHER_REGISTRY for m in matching_cfg["matchers"].values()):
         if not labeled:
             raise ValueError(
-                "ML matchers require labeled data; set io.labeled_data and "
+                "ML matchers require labeled data; pass --labeled-data and set "
                 "labeling.strategy: from_file in the config."
             )
         _require_nonempty(
@@ -650,7 +653,9 @@ def run_matching(cfg, candset, labeled, feature_table, output_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Config-driven Magellan (py_entitymatching) pipeline")
-    parser.add_argument("--input", required=True, help="Input directory containing ltable/rtable/labeled_data CSVs")
+    parser.add_argument("--ltable", required=True, help="Path to the left table CSV")
+    parser.add_argument("--rtable", required=True, help="Path to the right table CSV")
+    parser.add_argument("--labeled-data", default=None, help="Optional path to the labeled pairs CSV (required for ML matchers)")
     parser.add_argument("--output", required=True, help="Output directory for predictions and evaluation")
     parser.add_argument("--config", required=True, help="Path to the pipeline YAML config")
     args = parser.parse_args()
@@ -658,7 +663,7 @@ def main():
     os.makedirs(args.output, exist_ok=True)
     cfg = load_config(args.config)
 
-    ltable, rtable, labeled_data = load_tables(cfg, args.input)
+    ltable, rtable, labeled_data = load_tables(cfg, args.ltable, args.rtable, args.labeled_data)
 
     # Feature table used both for rule-based blocking and matching.
     feature_table_for_blocking = em.get_features_for_blocking(ltable, rtable, validate_inferred_attr_types=False)

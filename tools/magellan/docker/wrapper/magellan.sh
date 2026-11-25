@@ -2,23 +2,33 @@
 # magellan.sh — thin wrapper around run_magellan.py using the project venv.
 #
 # Usage:
-#   ./magellan.sh <input_dir> <output_dir> <config.yaml>
+#   ./magellan.sh <ltable.csv> <rtable.csv> <output_dir> <config.yaml> [labeled_data.csv]
 #
 # Example:
-#   ./magellan.sh data/ out/ config-example.yaml
+#   ./magellan.sh data/ltable.csv data/rtable.csv out/ config-example.yaml data/labeled.csv
 
 set -euo pipefail
 
-if [ "$#" -ne 3 ]; then
-  echo "Usage: $0 <input_dir> <output_dir> <config.yaml>" >&2
+if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
+  echo "Usage: $0 <ltable.csv> <rtable.csv> <output_dir> <config.yaml> [labeled_data.csv]" >&2
   exit 1
 fi
 
-INPUT_DIR="$1"
-OUTPUT_DIR="$2"
-CONFIG_FILE="$3"
+LTABLE="$1"
+RTABLE="$2"
+OUTPUT_DIR="$3"
+CONFIG_FILE="$4"
+LABELED_DATA="${5:-}"
 
-exec python run_magellan.py \
-  --input "${INPUT_DIR}" \
-  --output "${OUTPUT_DIR}" \
+ARGS=(
+  --ltable "${LTABLE}"
+  --rtable "${RTABLE}"
+  --output "${OUTPUT_DIR}"
   --config "${CONFIG_FILE}"
+)
+
+if [ -n "${LABELED_DATA}" ]; then
+  ARGS+=(--labeled-data "${LABELED_DATA}")
+fi
+
+exec python run_magellan.py "${ARGS[@]}"

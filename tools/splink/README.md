@@ -6,12 +6,12 @@ This project deduplicates/links two CSV files of paper metadata
 
 Files in this project:
 
-| File | Purpose |
-|---|---|
-| `run_splink.py` | The actual config-driven runner. |
-| `config.yaml` | All content settings (columns, comparison logic, training, output). |
-| `CONFIG_REFERENCE.md` | Full explanation of every key in `config.yaml`. |
-| `splink.sh` | Convenient shell wrapper around `run_splink.py`. |
+| File                  | Purpose                                                             |
+|-----------------------|---------------------------------------------------------------------|
+| `run_splink.py`       | The actual config-driven runner.                                    |
+| `config.yaml`         | All content settings (columns, comparison logic, training, output). |
+| `CONFIG_REFERENCE.md` | Full explanation of every key in `config.yaml`.                     |
+| `splink.sh`           | Convenient shell wrapper around `run_splink.py`.                    |
 
 ---
 

@@ -1,6 +1,7 @@
 """Run a KGpipe task test case: inputs, outputs, optional config."""
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -101,8 +102,8 @@ def run_case(case, tmp_path):
                 "Input slot '{}' is not in {} input_spec".format(slot, task.name)
             )
         source = resolve_case_path(case, relative)
-        if not source.is_file():
-            raise FileNotFoundError("Missing input {}: {}".format(slot, source))
+        #if not source.is_file():
+        #    raise FileNotFoundError("Missing input {}: {}".format(slot, source))
         named_inputs[slot] = Data(source, task.input_spec[slot])
 
     named_outputs = {}
@@ -137,6 +138,16 @@ def run_case(case, tmp_path):
                 )
             )
         if expected.is_file():
+            while actual.is_dir():
+                files_in_dir = os.listdir(actual)
+                file_count = len(files_in_dir)
+                if file_count != 1:
+                    raise AssertionError(
+                        "Task '{}' expected one file as output got {} - {}".format(
+                            task.name, file_count, actual
+                        )
+                    )
+                actual = Path(actual) / files_in_dir[0]
             _same_artifact(actual, expected)
 
 

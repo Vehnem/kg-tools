@@ -43,15 +43,16 @@ from kgpipe.execution import docker_client
 # ---------------------------------------------------------------------------
 
 _DEEPMATCHER_INPUT_SPEC = {
-    "data_dir": BasicDataFormats.DIRECTORY,
+    "data_dir": BasicDataFormats.ANY,   #folder with all files
     "train": BasicDataFormats.CSV,
     "validation": BasicDataFormats.CSV,
     "test": BasicDataFormats.CSV,
     "unlabeled": BasicDataFormats.CSV,
+    "cache": BasicDataFormats.ANY
 }
 
 _DEEPMATCHER_OUTPUT_SPEC = {
-    "model": BasicDataFormats.FILE,
+    "model": BasicDataFormats.ANY,  #saved model file
     "prediction": BasicDataFormats.CSV,
 }
 
@@ -102,13 +103,6 @@ def _process_parameters() -> list[Parameter]:
             native_keys=["process.embeddings"],
             datatype=ParameterType.string,
             default_value="glove.6B.50d",
-            required=False,
-        ),
-        Parameter(
-            name="embeddings_cache_path",
-            native_keys=["process.embeddings_cache_path"],
-            datatype=ParameterType.string,
-            default_value="~/.vector_cache",
             required=False,
         ),
         Parameter(
@@ -265,20 +259,18 @@ def _train_parameters() -> list[Parameter]:
             name="pos_neg_ratio",
             native_keys=["train.pos_neg_ratio"],
             datatype=ParameterType.integer,
-            default_value=None,
             required=False,
         ),
         Parameter(
             name="pos_weight",
             native_keys=["train.pos_weight"],
-            datatype=ParameterType.float,
-            default_value=None,
+            datatype=ParameterType.number,
             required=False,
         ),
         Parameter(
             name="label_smoothing",
             native_keys=["train.label_smoothing"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.05,
             required=False,
         ),
@@ -286,7 +278,6 @@ def _train_parameters() -> list[Parameter]:
             name="save_every_prefix",
             native_keys=["train.save_every_prefix"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
         ),
         Parameter(
@@ -307,7 +298,6 @@ def _train_parameters() -> list[Parameter]:
             name="device",
             native_keys=["train.device"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
             allowed_values=["cpu", "cuda"],
         ),
@@ -330,7 +320,6 @@ def _train_parameters() -> list[Parameter]:
             name="sort_in_buckets",
             native_keys=["train.sort_in_buckets"],
             datatype=ParameterType.boolean,
-            default_value=None,
             required=False,
         ),
     ]
@@ -349,7 +338,6 @@ def _eval_parameters() -> list[Parameter]:
             name="device",
             native_keys=["eval.device"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
             allowed_values=["cpu", "cuda"],
         ),
@@ -372,7 +360,6 @@ def _eval_parameters() -> list[Parameter]:
             name="sort_in_buckets",
             native_keys=["eval.sort_in_buckets"],
             datatype=ParameterType.boolean,
-            default_value=None,
             required=False,
         ),
     ]
@@ -398,7 +385,6 @@ def _prediction_parameters() -> list[Parameter]:
             name="device",
             native_keys=["prediction.device"],
             datatype=ParameterType.string,
-            default_value=None,
             required=False,
             allowed_values=["cpu", "cuda"],
         ),
@@ -421,7 +407,6 @@ def _prediction_parameters() -> list[Parameter]:
             name="sort_in_buckets",
             native_keys=["prediction.sort_in_buckets"],
             datatype=ParameterType.boolean,
-            default_value=None,
             required=False,
         ),
     ]
@@ -453,28 +438,28 @@ def _threshold_parameters() -> list[Parameter]:
         Parameter(
             name="value",
             native_keys=["threshold.value"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.8,
             required=False,
         ),
         Parameter(
             name="fraction",
             native_keys=["threshold.fraction"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=0.1,
             required=False,
         ),
         Parameter(
             name="std_multiplier",
             native_keys=["threshold.std_multiplier"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=1.0,
             required=False,
         ),
         Parameter(
             name="percentile",
             native_keys=["threshold.percentile"],
-            datatype=ParameterType.float,
+            datatype=ParameterType.number,
             default_value=90.0,
             required=False,
         ),
@@ -511,7 +496,10 @@ deepmatcher_entity_matching_config = ConfigurationDefinition(
 def _build_deepmatcher_config(config: ConfigurationProfile) -> str:
     sections: dict[str, dict] = {}
     for param in _deepmatcher_parameters():
-        value = config.get_parameter_value(param.name)
+        try:
+            value = config.get_parameter_value(param.name)
+        except ValueError:
+            value = param.default_value
 
         section, key = param.native_keys[0].split(".", 1)
 
@@ -550,12 +538,13 @@ def deepmatcher_entity_matching(
         command = [
             "bash", "deepmatcher.sh",
             remap(inputs["data_dir"]),
-            remap(inputs["train"]),
-            remap(inputs["validation"]),
-            remap(inputs["test"]),
+            inputs["train"].path.name,
+            inputs["validation"].path.name,
+            inputs["test"].path.name,
             remap(outputs["model"]),
             remap(inputs["unlabeled"]),
             remap(outputs["prediction"]),
+            remap(inputs["cache"]),
             remap(config_data),
         ]
 

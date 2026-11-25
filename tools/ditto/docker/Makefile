@@ -71,7 +71,7 @@ docker_test: create_outputdir create_checkpointdir
 	  -v $(abspath $(CHECKPOINT_DIR)):/wrapper/checkpoints \
 	  -v $(abspath $(CONFIG)):/wrapper/config-example.yaml:ro \
 	  kgt/ditto \
-	  -c 'set -e; \
+	  bash -c 'set -e; \
 		  cp /wrapper/config-example.yaml config-example-copy.yaml; \
 		  sed -i "s/^mode: match/mode: train/" config-example-copy.yaml; \
 		  sed -i "s#ditto_repo: \".*\"#ditto_repo: \"ditto\"#" config-example-copy.yaml; \

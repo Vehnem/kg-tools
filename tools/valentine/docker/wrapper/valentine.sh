@@ -1,14 +1,20 @@
 #!/bin/bash
-# bash valentine.sh path/to/infile1 path/to/infile2 path/to/outputfile
+# bash valentine.sh path/to/source.csv path/to/target.csv path/to/output_dir path/to/config.yaml [path/to/mapping.json]
 
-IN1=$1
-IN2=$2
-OUT=$3
+set -euo pipefail
 
-
-if [ -n "$4" ]; then
-    python valentine_example.py "$IN1" "$IN2" "$OUT" "$4"
-else
-    python valentine_example.py "$IN1" "$IN2" "$OUT"
+if [ "$#" -lt 4 ]; then
+    echo "Usage: bash valentine.sh <source.csv> <target.csv> <output_dir> <config.yaml> [mapping.json]" >&2
+    exit 1
 fi
 
+SOURCE=$1
+TARGET=$2
+OUT=$3
+CONFIG=$4
+
+if [ -n "${5:-}" ]; then
+    python valentine_example.py "$SOURCE" "$TARGET" "$OUT" "$CONFIG" "$5"
+else
+    python valentine_example.py "$SOURCE" "$TARGET" "$OUT" "$CONFIG"
+fi

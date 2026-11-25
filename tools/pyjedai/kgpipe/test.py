@@ -6,7 +6,7 @@ import pytest
 from kgpipe.common import Data, DataFormat
 from kgpipe.common.model.configuration import ConfigurationProfile, ParameterBinding
 
-from jedai_tasks import (
+from tools.pyjedai.kgpipe.jedai_tasks import (
     jedai_syntactic_matching_task,
     jedai_semantic_matching_task,
     jedai_syntactic_matching_config,

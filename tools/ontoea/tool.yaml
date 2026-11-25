@@ -1,0 +1,14 @@
+name: OntoEA
+kind:
+- python_package
+categories:
+- EntityResolution
+status: experimental
+description: Ontology-guided entity alignment across knowledge graphs.
+ci:
+  docker_build: false
+  docker_test: false
+kgpipe:
+  task_refs:
+  - ontoea_entity_alignment
+id: ontoea

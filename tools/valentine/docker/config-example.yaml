@@ -1,0 +1,84 @@
+io:
+  nrows: null
+  encoding: utf-8
+  separator: ","
+  source_name: null
+  target_name: null
+  instance_sample_size: 1000
+
+matchers:
+  Coma:
+    enabled: true
+    params:
+      max_n: 0
+      use_instances: false
+      use_schema: true
+      delta: 0.15
+      threshold: 0.0
+      instance_weight: 1.0
+  Cupid:
+    enabled: true
+    params:
+      leaf_w_struct: 0.2
+      w_struct: 0.2
+      th_accept: 0.7
+      th_high: 0.6
+      th_low: 0.35
+      c_inc: 1.2
+      c_dec: 0.9
+      th_ns: 0.7
+      process_num: 1
+  DistributionBased:
+    enabled: true
+    params:
+      threshold1: 0.15
+      threshold2: 0.15
+      quantiles: 256
+      process_num: 1
+      use_bloom_filters: false
+  JaccardDistanceMatcher:
+    enabled: true
+    params:
+      threshold_dist: 0.8
+      distance_fun: Levenshtein
+      process_num: 1
+      embedding_model: all-MiniLM-L6-v2
+      embedding_device: null
+      embedding_batch_size: null
+      tversky_alpha: 1.0
+      tversky_beta: 1.0
+  SimilarityFlooding:
+    enabled: true
+    params:
+      coeff_policy: INVERSE_AVERAGE
+      formula: FORMULA_C
+      string_matcher: PREFIX_SUFFIX
+      tfidf_corpus: []
+
+selection:
+  method: one_to_one_greedy
+  threshold: null
+  mutual_top_n: null
+  min_score: null
+  top_percent: null
+  top_n: null
+  top_n_per_source: null
+
+output:
+  include_details: false
+  evaluation_csv: evaluation.csv
+
+evaluation:
+  enabled: true
+  valentine_metrics:
+    enabled: false
+    metrics:
+      - Precision
+      - Recall
+      - F1Score
+      - PrecisionTopNPercent
+      - RecallAtSizeofGroundTruth
+      - MeanReciprocalRank
+    one_to_one: true
+    one_to_one_method: hungarian
+    top_n_percent: 10

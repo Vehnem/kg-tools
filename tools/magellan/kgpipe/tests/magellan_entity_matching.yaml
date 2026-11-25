@@ -1,0 +1,24 @@
+task: magellan_entity_matching
+description: Tiny magellan entity matching fixture for the pytest harness.
+inputs:
+  ltable: fixtures/source.csv
+  rtable: fixtures/target.csv
+  labeled_data: ''
+outputs:
+  output: fixtures/output.csv
+config:
+  l_key: 'id'
+  r_key: 'id'
+  blockers: |
+    - name: exact_zip
+      method: attr_equivalence_blocker
+      block_attr_l: title
+      block_attr_r: title
+      l_output_attrs: [title, author, isbn13]
+      r_output_attrs: [title, author, isbn]
+      n_jobs: 1
+  matchers: |
+    name_rule_check:
+      method: rule_based
+      rules:
+        - ["title_title_lev_sim(ltuple, rtuple) > 0.7"]
